@@ -1,15 +1,21 @@
-[gd_scene load_steps=3 format=3 uid="uid://ctw0lq6v6yllf"]
+[gd_scene load_steps=5 format=3 uid="uid://ctw0lq6v6yllf"]
 
 [ext_resource type="Script" path="res://AirMass.cs" id="1_vvny6"]
+
+[sub_resource type="Curve" id="Curve_p36v0"]
+_data = [Vector2(0, 0), 0.0, 1.0, 0, 1, Vector2(1, 1), 1.0, 0.0, 1, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_31lp6"]
+curve = SubResource("Curve_p36v0")
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_8ibcl"]
 resource_local_to_scene = true
 particle_flag_disable_z = true
 direction = Vector3(0, 0, 0)
 spread = 180.0
-initial_velocity_min = -5.0
-initial_velocity_max = 5.0
 gravity = Vector3(0, 0, 0)
+alpha_curve = SubResource("CurveTexture_31lp6")
 
 [node name="AirMass" type="Node2D" groups=["AllPoints"]]
 script = ExtResource("1_vvny6")
