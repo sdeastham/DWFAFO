@@ -25,7 +25,7 @@ public partial class Hud : CanvasLayer
 		GetNode<Button>("ConfigSelectButton").Hide();
 		GetNode<Label>("ConfigPathLabel").Hide();
 		string configPath = GetNode<Label>("ConfigPathLabel").Text;
-		EmitSignal(SignalName.StartSimulation,configPath);
+		EmitSignal(SignalName.StartSimulation,ProjectSettings.GlobalizePath(configPath));
 	}
 
 	private void OnChooseFileButtonPressed()

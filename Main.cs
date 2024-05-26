@@ -1,10 +1,16 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using Godot.Collections;
 using DroxtalWolf;
+using Microsoft.Research.Science.Data;
+using Microsoft.Research.Science.Data.Imperative;
+using Microsoft.Research.Science.Data.NetCDF4;
+using Array = System.Array;
+using Environment = System.Environment;
 
 public partial class Main : Node
 {
@@ -12,33 +18,128 @@ public partial class Main : Node
 	public PackedScene AirMassScene {get;set;}
 
 	private Simulator DotSimulator;
+
+	private bool Idle;
 	
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
-		StartIdleAnimation();
+		Idle = true;
+		StartIdleSimulation();
+
+		// In case this is not set by the user..
+		//TODO: Let the user set this directly from config or the opening menu
+		string? ncPath = Environment.GetEnvironmentVariable("LIBNETCDFPATH");
+		if (ncPath == null)
+		{
+			ncPath = "C:/Program Files/netCDF 4.9.2/lib/netcdf.lib";
+			Environment.SetEnvironmentVariable("LIBNETCDFPATH", ncPath);
+		}
 	}
 
 	public void StartSimulation(string pathToConfig)
 	{
-		//ClearSimulation();
-		GetTree().CallGroup("AllPoints", Node.MethodName.QueueFree);
-		DotSimulator.ClearList();
-		GD.Print(pathToConfig);
+		StopIdleSimulation();
+		StartDWSimulation(pathToConfig);
 	}
 
-	private void ClearSimulation()
+	private void StartDWSimulation(string configFile)
 	{
+		// Initialize timing
+        Stopwatch watch = new();
+        watch.Start();
+        System.Collections.Generic.Dictionary<string,Stopwatch> subwatches = [];
+        foreach (string watchName in (string[])["Point seeding", "Point physics", "Point culling", "Met advance",
+                     "Derived quantities", "Met interpolate", "Archiving", "File writing"])
+        {
+            subwatches.Add(watchName, new Stopwatch());   
+        }
+        RunOptions configOptions = RunOptions.ReadConfig(configFile);
+        
+        // Extract and store relevant variables
+        bool verbose = configOptions.Verbose;
+        bool updateMeteorology = configOptions.TimeDependentMeteorology;
+
+        // Specify the domain
+        double[] lonLims = configOptions.Domain.LonLimits;
+        double[] latLims = configOptions.Domain.LatLimits;
+        double[] pLims   = [configOptions.Domain.PressureBase * 100.0,
+            configOptions.Domain.PressureCeiling * 100.0];
+
+        // Major simulation settings
+        DateTime startDate = configOptions.Timing.StartDate;
+        DateTime endDate = configOptions.Timing.EndDate;
+        // Time step in seconds
+        double dt = configOptions.Timesteps.Simulation;
+        // How often to add data to the in-memory archive?
+        double dtStorage = 60.0 * configOptions.Timesteps.Storage;
+        // How often to report to the user?
+        double dtReport = 60.0 * configOptions.Timesteps.Reporting;
+        // How often to write the in-memory archive to disk?
+        //double dtOutput = TimeSpan.ParseExact(configOptions.Timesteps.Output,"hhmmss",CultureInfo.InvariantCulture).TotalSeconds;
+        double dtOutput = RunOptions.ParseHms(configOptions.Timesteps.Output);
+            
+        DateTime currentDate = startDate; // DateTime is a value type so this creates a new copy
+        
+        // Check if the domain manager will need to calculate box heights (expensive)
+        bool boxHeightsNeeded = configOptions.PointsFlights is { Active: true, ComplexContrails: true };
+        
+        // Are we using MERRA-2 or ERA5 data?
+        //TODO: Move AP and BP out of here/MERRA-2 into MetManager, then delete MERRA2
+        string dataSource = configOptions.InputOutput.MetSource;
+        double[] AP, BP;
+        bool fixedPressures;
+        if (dataSource == "MERRA-2")
+        {
+            AP = MERRA2.AP;
+            BP = MERRA2.BP;
+            fixedPressures = false;
+        }
+        else if (dataSource == "ERA5")
+        {
+            AP = [ 70.0e2, 100.0e2, 125.0e2, 150.0e2, 175.0e2,
+                  200.0e2, 225.0e2, 250.0e2, 300.0e2, 350.0e2,
+                  400.0e2, 450.0e2, 500.0e2, 550.0e2, 600.0e2,
+                  650.0e2, 700.0e2, 750.0e2, 775.0e2, 800.0e2,
+                  825.0e2, 850.0e2, 875.0e2, 900.0e2, 925.0e2,
+                  950.0e2, 975.0e2,1000.0e2];
+            Array.Reverse(AP); // All data will be flipped internally
+            BP = new double[AP.Length];
+            for (int i = 0; i < AP.Length; i++)
+            {
+                BP[i] = 0.0;
+            }
+            fixedPressures = true;
+        }
+        else
+        {
+            throw new ArgumentException($"Meteorology data source {dataSource} not recognized.");
+        }
+        
+        // Set up the meteorology and domain
+        MetManager meteorology = new MetManager(configOptions.InputOutput.MetDirectory, lonLims, latLims, startDate, 
+            configOptions.InputOutput.SerialMetData, subwatches, dataSource);
+        (double[] lonEdge, double[] latEdge) = meteorology.GetXYMesh();
+        DomainManager domainManager = new DomainManager(lonEdge, latEdge, pLims, AP, BP,
+            meteorology, subwatches, boxHeightsNeeded, fixedPressures);
+	}
+	
+	private void StopIdleSimulation()
+	{
+		GetTree().CallGroup("AllPoints", Node.MethodName.QueueFree);
+		DotSimulator.ClearList();
 		var oldNodes = GetTree().GetNodesInGroup("AllPoints");
 		foreach (AirMass airMass in oldNodes)
 		{
 			airMass.KillNode();
 		}
+		Idle = false;
 	}
 
-	public void StartIdleAnimation()
+	public void StartIdleSimulation()
 	{
 		// Create the simulator
+		Idle = true;
 		DotSimulator = new Simulator();
 		
 		// Start with some non-zero number of points
@@ -62,6 +163,9 @@ public partial class Main : Node
 			//AirMass airMass = node.GetNode<AirMass>("AirMass");
 			node.Live = false;
 		}
+
+		if (!Idle) { return; }
+
 		// Advance the external simulation
 		const double simulationHoursPerSecond=1.0;
 		DotSimulator.AdvanceSimulation(delta * simulationHoursPerSecond * 3600.0);
