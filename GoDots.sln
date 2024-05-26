@@ -2,6 +2,8 @@
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoDots", "GoDots.csproj", "{2D93C3A4-F4DB-4F19-A31C-0F4D10B28FC4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DroxtalWolf", "..\..\LGTracer\DroxtalWolf\DroxtalWolf.csproj", "{56D01226-8FD2-40F8-8B80-7AF6A1920A0C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 	Debug|Any CPU = Debug|Any CPU
@@ -15,5 +17,11 @@ Global
 		{2D93C3A4-F4DB-4F19-A31C-0F4D10B28FC4}.ExportDebug|Any CPU.Build.0 = ExportDebug|Any CPU
 		{2D93C3A4-F4DB-4F19-A31C-0F4D10B28FC4}.ExportRelease|Any CPU.ActiveCfg = ExportRelease|Any CPU
 		{2D93C3A4-F4DB-4F19-A31C-0F4D10B28FC4}.ExportRelease|Any CPU.Build.0 = ExportRelease|Any CPU
+		{56D01226-8FD2-40F8-8B80-7AF6A1920A0C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56D01226-8FD2-40F8-8B80-7AF6A1920A0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56D01226-8FD2-40F8-8B80-7AF6A1920A0C}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56D01226-8FD2-40F8-8B80-7AF6A1920A0C}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{56D01226-8FD2-40F8-8B80-7AF6A1920A0C}.ExportRelease|Any CPU.ActiveCfg = Debug|Any CPU
+		{56D01226-8FD2-40F8-8B80-7AF6A1920A0C}.ExportRelease|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 EndGlobal
