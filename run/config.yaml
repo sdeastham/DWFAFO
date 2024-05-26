@@ -1,0 +1,80 @@
+﻿---
+timing:
+  start-date: "2023-01-01 00:00:00"
+  end-date: "2023-01-02 00:00:00"
+timesteps:
+  # Simulation heartbeat (seconds)
+  simulation: 300.0
+  # Diagnostic and output (minutes)
+  reporting: 180.0
+  # Frequency data will be stored to file (minutes)
+  storage: 5.0
+  # Frequency data will be written to disk (hh:mm:ss)
+  output: 24:00:00
+points-dense:
+  max: 0
+  initial: 1500
+  # Calculate delta T due to pressure change?
+  adiabatic-compression: true
+  kg-per-point: 2.0e13
+  output-filename: dense-points-{date}.nc
+  output-variables: [ "temperature",
+                      "relative_humidity_ice",
+                      "relative_humidity_liquid",
+                      "specific_humidity"]
+points-flights:
+  schedule-filename: "schedule_large_ranged.csv"
+  airports-filename: "airports_large.csv"
+  segments-filename: null
+  use-icao: true
+  max: null
+  adiabatic-compression: true
+  output-filename: flight-waypoints-{date}.nc
+  output-variables: ["segment_length",
+                     "segment_stretch",
+                     "segment_orientation",
+                     "segment_tail_longitude",
+                     "segment_tail_latitude",
+                     "segment_tail_pressure",
+                     "contrail_ice_mass",
+                     "contrail_settling_velocity",
+                     "contrail_crystal_radius",
+                     "contrail_cross_section_area"]
+  write-trajectories: true
+  trajectory-filename: trajectories-{date}.parquet
+  trajectory-variables: ["segment_length",
+                         "segment_orientation",
+                         "time"]
+  trajectory-identifier-filename: flightmatch-{date}.parquet
+  # Contrail options
+  contrail-simulation: true
+  include-settling: true
+  # Complex contrails incur more computational cost
+  complex-contrails: false
+  skip-newton-iteration-for-tlm: false
+  use-ponater-tlc: true
+  point-spacing: 300.0
+  # To ensure ongoing location collection - in hours
+  minimum-lifetime: 3.0
+domain:
+  east-limit: -80.0
+  west-limit: 15.0
+  south-limit: 10.0
+  north-limit: 60.0
+  pressure-base: 850.0
+  pressure-ceiling: 200.0
+input-output:
+  # Met source must be MERRA-2 or ERA5
+  met-source: "MERRA-2"
+  met-directory: "C:/Data/MERRA-2"
+  #met-source: "ERA5"
+  #met-directory: "C:/Data/ERA5"
+  output-directory: "C:/Data/LGTracer/output"
+  input-directory: "C:/Data/LGTracer/input"
+  serial-met-data: false
+# Use null for the default (system clock)
+seed: 481301
+# Update meteorology over time?
+time-dependent-meteorology: true
+# More verbose output?
+verbose: true
