@@ -5,6 +5,14 @@
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_gwpb5")
 
+[node name="Blackout" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
 [node name="ConfigPathLabel" type="Label" parent="."]
 anchors_preset = 8
 anchor_left = 0.5
@@ -56,6 +64,19 @@ initial_position = 1
 size = Vector2i(1000, 400)
 ok_button_text = "Open"
 file_mode = 0
+
+[node name="UserMessage" type="Label" parent="."]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -115.0
+offset_right = 609.0
+offset_bottom = -16.0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 36
+text = "MESSAGE"
+vertical_alignment = 2
 
 [connection signal="pressed" from="ConfigSelectButton" to="." method="OnChooseFileButtonPressed"]
 [connection signal="pressed" from="BeginSimulationButton" to="." method="OnStartButtonPressed"]

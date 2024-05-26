@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 using Godot.Collections;
 using DroxtalWolf;
 using Microsoft.Research.Science.Data;
@@ -39,8 +40,16 @@ public partial class Main : Node
 
 	public void StartSimulation(string pathToConfig)
 	{
+		Hud? hud = GetNode<Hud>("HUD");
+		Label? usrMsg = hud.GetNode<Label>("UserMessage");
+		usrMsg.Text = "Loading...";
+		usrMsg.Show();
+		hud.GetNode<ColorRect>("Blackout").Show();
 		StopIdleSimulation();
+		//await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
 		StartDWSimulation(pathToConfig);
+		hud.GetNode<Label>("UserMessage").Hide();
+		hud.GetNode<ColorRect>("Blackout").Hide();
 	}
 
 	private void StartDWSimulation(string configFile)

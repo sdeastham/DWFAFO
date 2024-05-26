@@ -10,6 +10,9 @@ public partial class Hud : CanvasLayer
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
+		// Remove loading messages etc
+		GetNode<ColorRect>("Blackout").Hide();
+		GetNode<Label>("UserMessage").Hide();
 		// Check if the default file is producing a valid config..
 		CheckConfig();
 	}
