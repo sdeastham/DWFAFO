@@ -1,19 +1,25 @@
 using Godot;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 public partial class Main : Node
 {
 	[Export]
 	public PackedScene AirMassScene {get;set;}
-	
-	RandomNumberGenerator Random;
+
+	private Simulator DotSimulator;
 	
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
-	{
-		Random = new RandomNumberGenerator();
-		Random.Randomize();
-		Point[] points = GetPointData();
+	{	
+		// Create the simulator
+		DotSimulator = new Simulator();
+		
+		// Start with some non-zero number of points
+		const int nLocations = 70;
+		DotSimulator.GenerateRandomPoints(nLocations);
+		IEnumerable<Point> points = DotSimulator.GetPointData();
 		foreach (Point point in points)
 		{
 			CreateAirMass(point.X,point.Y,point.UniqueIdentifier);
@@ -25,10 +31,10 @@ public partial class Main : Node
 	{
 		// Advance the external simulation
 		const double simulationHoursPerSecond=1.0;
-		AdvanceSimulation(delta * simulationHoursPerSecond);
+		DotSimulator.AdvanceSimulation(delta * simulationHoursPerSecond);
 		
 		// Call an external function to get a list of the current node locations
-		//Vector2[] nodeLocations = GetNodeLocations();
+		Point[] newPoints = DotSimulator.GetPointData().ToArray();
 	}
 	
 	public void CreateAirMass(float longitude, float latitude, ulong uid)
@@ -64,24 +70,6 @@ public partial class Main : Node
 		return ((lonMod+180)*xScaling,(180.0f - (latitude+90.0f))*yScaling);
 	}
 	
-	public void AdvanceSimulation(double timeStep)
-	{
-		return;
-	}
-	
-	public Point[] GetPointData()
-	{
-		int nLocations = Random.RandiRange(50,100);
-		Point[] points = new Point[nLocations];
-		for (int i=0; i < nLocations; i++)
-		{
-			float lon = Random.Randf() * 360.0f - 180.0f;
-			float lat = Random.Randf() * 180.0f - 90.0f;
-			points[i] = new Point(lon,lat,0);
-		}
-		return points;
-	}
-	
 	public override void _Input(InputEvent @event)
 	{
 		// Place a new air mass wherever we click
@@ -94,20 +82,67 @@ public partial class Main : Node
 			CreateAirMassXY(x,y,0);
 		}
 	}
-	
-	public class Point
+}
+
+public class Simulator
+{
+	private LinkedList<Point> PointList;
+	RandomNumberGenerator Random;
+
+	public Simulator()
 	{
-		// A simple class to hold the minimum information needed to identify
-		// a point
-		public Vector2 Location;
-		public ulong UniqueIdentifier {get; private set;}
-		public float X => Location.X;
-		public float Y => Location.Y;
-		
-		public Point(float x, float y, ulong uniqueIdentifier)
+		Random = new RandomNumberGenerator();
+		Random.Randomize();
+		PointList = new LinkedList<Point>();
+	}
+	
+	public void AdvanceSimulation(double timeStep)
+	{
+		// We have a rate at which points are created and a rate at which they are lost
+		// Interface to external code to grab the updated list of point locations and properties
+		List<Point> newPoints = new List<Point>();
+		// Take the existing points and move them East at 50 kph
+		const float uSpeed = 50.0f * 1000.0f / 3600.0f; // Change from kph to m/s
+		foreach (Point point in PointList)
 		{
-			Location = new Vector2(x,y);
-			UniqueIdentifier = uniqueIdentifier;	
+			float lon = point.X;
+			float lat = point.Y;
+			// Don't change latitude, but do increase longitude
+			float localCircumference = (float)(6378.0e3 * Math.PI * 2.0 * Math.Cos(Math.PI * lat / 180.0));
+			float newLon = lon + uSpeed * 360.0f / localCircumference;
 		}
+		return;
+	}
+
+	public IEnumerable<Point> GetPointData()
+	{
+		return PointList;
+	}
+	
+	public void GenerateRandomPoints(int nLocations)
+	{
+		for (int i=0; i < nLocations; i++)
+		{
+			float lon = Random.Randf() * 360.0f - 180.0f;
+			float lat = Random.Randf() * 180.0f - 90.0f;
+			PointList.AddLast(new Point(lon,lat,0));
+		}
+	}
+}
+
+public class Point
+{
+	// A simple class to hold the minimum information needed to identify
+	// a point
+	public Vector2 Location;
+	public ulong UniqueIdentifier {get; private set;}
+	// X and Y are lon and lat, NOT in window coordinates
+	public float X => Location.X;
+	public float Y => Location.Y;
+		
+	public Point(float x, float y, ulong uniqueIdentifier)
+	{
+		Location = new Vector2(x,y);
+		UniqueIdentifier = uniqueIdentifier;	
 	}
 }
