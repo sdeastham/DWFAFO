@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://chy61f20xgwvj"]
+[gd_scene load_steps=5 format=3 uid="uid://chy61f20xgwvj"]
 
 [ext_resource type="Script" path="res://Main.cs" id="1_anyro"]
 [ext_resource type="PackedScene" uid="uid://ctw0lq6v6yllf" path="res://air_mass.tscn" id="2_6etq6"]
 [ext_resource type="Texture2D" uid="uid://vhrytdvpmuo2" path="res://textures/world.200407.3x5400x2700.jpg" id="3_txfug"]
+[ext_resource type="PackedScene" uid="uid://r8rcxext40h0" path="res://hud.tscn" id="4_vwp7e"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1_anyro")
@@ -13,3 +14,7 @@ offset_right = 5400.0
 offset_bottom = 2700.0
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("3_txfug")
+
+[node name="HUD" parent="." instance=ExtResource("4_vwp7e")]
+
+[connection signal="StartSimulation" from="HUD" to="." method="StartSimulation"]

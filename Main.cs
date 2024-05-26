@@ -15,7 +15,29 @@ public partial class Main : Node
 	
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
-	{	
+	{
+		StartIdleAnimation();
+	}
+
+	public void StartSimulation(string pathToConfig)
+	{
+		//ClearSimulation();
+		GetTree().CallGroup("AllPoints", Node.MethodName.QueueFree);
+		DotSimulator.ClearList();
+		GD.Print(pathToConfig);
+	}
+
+	private void ClearSimulation()
+	{
+		var oldNodes = GetTree().GetNodesInGroup("AllPoints");
+		foreach (AirMass airMass in oldNodes)
+		{
+			airMass.KillNode();
+		}
+	}
+
+	public void StartIdleAnimation()
+	{
 		// Create the simulator
 		DotSimulator = new Simulator();
 		
@@ -69,9 +91,7 @@ public partial class Main : Node
 
 		foreach (AirMass airMass in oldNodes)
 		{
-			//AirMass airMass = node.GetNode<AirMass>("AirMass");
 			if (airMass.Live) continue;
-			//GD.Print("KILL");
 			airMass.KillNode();
 		}
 	}
@@ -144,6 +164,11 @@ public class Simulator
 		_random.Randomize();
 		_nextUniqueIdentifier = 1;
 		_pointList = new LinkedList<Point>();
+	}
+
+	public void ClearList()
+	{
+		_pointList.Clear();
 	}
 	
 	public void AdvanceSimulation(double timeStep)
