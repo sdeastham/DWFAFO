@@ -34,18 +34,23 @@ public partial class Main : Node
 		}
 	}
 
-	public async Task StartSimulation(string pathToConfig)
+	public async void StartSimulation(string pathToConfig)
 	{
 		Hud? hud = GetNode<Hud>("HUD");
 		Label? usrMsg = hud.GetNode<Label>("UserMessage");
 		usrMsg.Text = "Loading...";
 		usrMsg.Show();
+		// Put up a semi-transparent veil
 		hud.GetNode<ColorRect>("Blackout").Show();
-		StopIdleSimulation();
+		hud.GetNode<ColorRect>("Blackout").Color = Color.Color8(0,0,0,128);
 		
 		// Set up the full simulator
 		_mainSimulator = new Simulator();
-		//_mainSimulator.Initialize();
+		// Run the configuration/initial loading asynchronously; this ensures that the main
+		// thread does not block. Also, the user gets to keep playing with the idle simulator
+		await Task.Run(() => _mainSimulator.Initialize(pathToConfig));
+		// Once complete, kill the idle simulation and remove the veil
+		StopIdleSimulation();
 		hud.GetNode<Label>("UserMessage").Hide();
 		hud.GetNode<ColorRect>("Blackout").Hide();
 	}
