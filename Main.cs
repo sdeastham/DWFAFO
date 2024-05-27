@@ -58,6 +58,16 @@ public partial class Main : Node
 		hud.GetNode<ColorRect>("Blackout").Hide();
 		// Reduce the simulation speed
 		_simulationSpeed = 60.0/3600.0; // Simulation hours per wall-clock second
+		// Show and update the speed slider (display is in minutes/second)
+		var slider = hud.GetNode<VSlider>("SpeedSlider");
+		slider.Value = _simulationSpeed * 60.0;
+		slider.Show();
+	}
+
+	public void UpdateSimulationSpeed(float newSpeed)
+	{
+		GD.Print(newSpeed);
+		_simulationSpeed = newSpeed / 60.0;
 	}
 	
 	private void StopIdleSimulation()

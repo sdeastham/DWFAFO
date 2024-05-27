@@ -18,3 +18,4 @@ texture = ExtResource("3_txfug")
 [node name="HUD" parent="." instance=ExtResource("4_vwp7e")]
 
 [connection signal="StartSimulation" from="HUD" to="." method="StartSimulation"]
+[connection signal="UpdateSpeed" from="HUD" to="." method="UpdateSimulationSpeed"]

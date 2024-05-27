@@ -6,6 +6,9 @@ public partial class Hud : CanvasLayer
 {
 	[Signal]
 	public delegate void StartSimulationEventHandler(string configPath);
+
+	[Signal]
+	public delegate void UpdateSpeedEventHandler(float hoursPerSecond);
 	
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
@@ -13,6 +16,7 @@ public partial class Hud : CanvasLayer
 		// Remove loading messages etc
 		GetNode<ColorRect>("Blackout").Hide();
 		GetNode<Label>("UserMessage").Hide();
+		GetNode<VSlider>("SpeedSlider").Hide();
 		// Check if the default file is producing a valid config..
 		CheckConfig();
 	}
@@ -59,5 +63,11 @@ public partial class Hud : CanvasLayer
 			GetNode<Button>("BeginSimulationButton").Disabled = true;
 			throw;
 		}
+	}
+
+	private void OnSpeedSliderChange(float value)
+	{
+		// Update simulation speed (display is in minutes/second)
+		EmitSignal(SignalName.UpdateSpeed, value);
 	}
 }

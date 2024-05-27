@@ -46,27 +46,21 @@ public partial class AirMass : Node2D
 		Position = location;
 	}
 	
-	public void SetProperties(float x, float y, float? c=null)
+	public void SetProperties(float x, float y, bool randomColor=false)
 	{
-		//Position = new Vector2(x,y);
 		UpdatePosition(new Vector2(x,y));
+		if (!randomColor) { return; }
 		// Assign a random color to the point
-		var particleGen = GetNode<GpuParticles2D>("ParticleSpawner");
 		// NB: For this to work, you need to set "Local to Scene" in the
 		// "Resource" tab for the process material
-		float alpha = 0.5f;
-		// Use a saturation of 1.0 and a value of 1.0, no matter what. The input
-		// defines only the "hue"
-		float hue;
-		if (c == null)
-		{
-			hue = GD.Randf();
-		}
-		else
-		{
-			hue = (float)c;
-		}
-		var newColor = Color.FromHsv(hue,0.8f,0.9f,alpha);
+		// Use a saturation of 1.0 and a value of 1.0, but a random hue
+		UpdateColor(Color.FromHsv(GD.Randf(),0.8f,0.9f,0.5f));
+	}
+
+	private void UpdateColor(Color newColor)
+	{
+		// WARNING: Unless the material is currently local to scene, this will cause all trails to change color!
+		GpuParticles2D particleGen = GetNode<GpuParticles2D>("ParticleSpawner");
 		particleGen.ProcessMaterial.Set("color",newColor);
 	}
 }
