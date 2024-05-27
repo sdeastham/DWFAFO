@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using DroxtalWolf;
 using Godot;
@@ -22,6 +23,8 @@ public class Simulator : ISimulator
 	private readonly List<PointManager> _pointManagers;
 	private TimeManager _timeManager;
 	private ulong StoredTimePoints;
+
+	private Dictionary<ulong, Dot> _oldPoints, _newPoints;
 	
 	public Simulator()
 	{
@@ -38,6 +41,10 @@ public class Simulator : ISimulator
 		_seedsUsed = [];
 		_pointManagers = [];
 		StoredTimePoints = 0;
+		// Points at the start of the physics time step
+		_oldPoints = [];
+		// Points at the end of the physics time step
+		_newPoints = [];
 	}
 	
 	public async Task Initialize(string configFile)
@@ -103,14 +110,11 @@ public class Simulator : ISimulator
 	
 	public void Advance(double timePerFrame)
 	{
-		//TODO: Find a robust way to have the simulation advance at a fixed speed regardless of frame rate
-		// This won't necessarily be smooth because the priority is to make the simulation repeatable rather than
-		// visually appealing. As such, we will have a cap on frame rate, and if we achieve it - great. If not, the
-		// simulation will just proceed as fast as the computer will allow.
+		// This is called from the physics processor, which should ensure it proceeds at the desired rate
 		// Two possibilities: either we need to simulate multiple steps per frame, or the frame might be too short!
 		_timeManager.AdvanceExternal(timePerFrame);
 		//GD.Print($"Current: {_timeManager.CurrentTime}/External: {_timeManager.ExternalTime}");
-		while (_timeManager.CurrentTime < _timeManager.ExternalTime)
+		while (_timeManager.CurrentTime <= _timeManager.ExternalTime)
 		{
 			if (_configOptions.TimeDependentMeteorology)
 			{
@@ -138,10 +142,28 @@ public class Simulator : ISimulator
 			}
 			_timeManager.Advance();
 		}
+		// Replace the point list...
+		_oldPoints.Clear();
+		foreach (Dot point in _newPoints.Values)
+		{
+			_oldPoints[point.UniqueIdentifier] = point;
+		}
+		_newPoints.Clear();
+		foreach (PointManager pm in _pointManagers)
+		{
+			foreach (IAdvected advPoint in pm.ActivePoints)
+			{
+				(double x, double y, double p) = advPoint.GetLocation();
+				ulong uid = advPoint.GetUID();
+				Dot point = new Dot((float)x, (float)y, uid, 1.0);
+				_newPoints.Add(uid,point);
+			}
+		}
 	}
 	
 	public IEnumerable<Dot> GetPointData()
 	{
+		/*
 		List<Dot> pointList = [];
 		foreach (PointManager pm in _pointManagers)
 		{
@@ -154,6 +176,8 @@ public class Simulator : ISimulator
 			}
 		}
 		return pointList;
+		*/
+		return _newPoints.Values.ToArray();
 	}
 
 	public void SetupPointManagers()
