@@ -90,9 +90,10 @@ offset_bottom = -60.0
 grow_horizontal = 0
 grow_vertical = 2
 tooltip_text = "Speed slider (simulation minutes per user second)"
-max_value = 60.0
+max_value = 180.0
 value = 1.0
 rounded = true
+ticks_on_borders = true
 
 [connection signal="pressed" from="ConfigSelectButton" to="." method="OnChooseFileButtonPressed"]
 [connection signal="pressed" from="BeginSimulationButton" to="." method="OnStartButtonPressed"]

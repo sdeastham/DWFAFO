@@ -16,13 +16,13 @@ public partial class Main : Node
 	private double _simulationSpeed;
 	private Dictionary<ulong, AirMass> _pointDict;
 
-	private bool Idle;
+	private bool _idle;
 	
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		_simulationSpeed = 1.0; // Simulation hours per wall-clock second
-		Idle = true;
+		_idle = true;
 		_pointDict = [];
 		StartIdleSimulation();
 
@@ -67,7 +67,18 @@ public partial class Main : Node
 	public void UpdateSimulationSpeed(float newSpeed)
 	{
 		GD.Print(newSpeed);
+		// Simulation speed is simulated hours per real-time second
+		// newSpeed is simulated minutes per real-time second
 		_simulationSpeed = newSpeed / 60.0;
+		// We don't want the trails to get longer just because the simulation speed is higher
+		// We want to drop a point once every simulated minute, and we want the dots to remain for an hour
+		int targetNumber = 60;
+		double newLifetime = 60.0 / newSpeed; // simulation minutes divided by simulation minutes per real-time second
+		double newFrequency = (double)targetNumber / newLifetime;
+		foreach (AirMass airMass in _pointDict.Values)
+		{
+			airMass.UpdateLifetime(newLifetime, newFrequency);
+		}
 	}
 	
 	private void StopIdleSimulation()
@@ -79,14 +90,14 @@ public partial class Main : Node
 		{
 			airMass.KillNode();
 		}
-		Idle = false;
+		_idle = false;
 		_pointDict.Clear();
 	}
 
 	public void StartIdleSimulation()
 	{
 		// Create the simulator
-		Idle = true;
+		_idle = true;
 		_simulator = new IdleSimulator();
 		
 		// Start with some non-zero number of points
@@ -119,7 +130,7 @@ public partial class Main : Node
 		Dot[] newPoints = _simulator.GetPointData().ToArray();
 		
 		// Let the user know how far we have gotten
-		if (!Idle)
+		if (!_idle)
 		{
 			Hud? hud = GetNode<Hud>("HUD");
 			Label? usrMsg = hud.GetNode<Label>("UserMessage");
@@ -164,6 +175,9 @@ public partial class Main : Node
 		AirMass dot = AirMassScene.Instantiate<AirMass>();
 		dot.SetProperties(x,y);
 		dot.SetUniqueIdentifier(uid);
+		//dot.UpdateColor(Color.Color8(255,0,0,127));
+		dot.UpdateColor(Color.Color8(255,255,255,127));
+		dot.UpdateLifetime(2.0,10.0);
 		_pointDict[dot.UniqueIdentifier] = dot;
 		AddChild(dot);
 	}
@@ -203,7 +217,7 @@ public partial class Main : Node
 	public override void _Input(InputEvent @event)
 	{
 		// Place a new air mass wherever we click
-		if (!Idle) { return; }
+		if (!_idle) { return; }
 		if (@event is InputEventMouseButton eventMouseButton && @event.IsPressed()
 			&& eventMouseButton.ButtonIndex == MouseButton.Left)
 		{

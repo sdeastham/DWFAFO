@@ -16,7 +16,7 @@ points-dense:
   initial: 1500
   # Calculate delta T due to pressure change?
   adiabatic-compression: true
-  kg-per-point: 2.0e13
+  kg-per-point: 2.0e14
   output-filename: dense-points-{date}.nc
   output-variables: [ "temperature",
 					  "relative_humidity_ice",

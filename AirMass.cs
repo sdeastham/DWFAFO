@@ -57,10 +57,19 @@ public partial class AirMass : Node2D
 		UpdateColor(Color.FromHsv(GD.Randf(),0.8f,0.9f,0.5f));
 	}
 
-	private void UpdateColor(Color newColor)
+	// WARNING: Unless the material is currently local to scene, these will cause all trails to change!
+	public void UpdateColor(Color newColor)
 	{
-		// WARNING: Unless the material is currently local to scene, this will cause all trails to change color!
 		GpuParticles2D particleGen = GetNode<GpuParticles2D>("ParticleSpawner");
 		particleGen.ProcessMaterial.Set("color",newColor);
+	}
+	
+	public void UpdateLifetime(double lifetime, double frequency)
+	{
+		// Lifetime also affects the frequency of output - because the number of particles is capped
+		int cap = (int)Math.Round(frequency * lifetime);
+		GpuParticles2D particleGen = GetNode<GpuParticles2D>("ParticleSpawner");
+		particleGen.Set("lifetime",(float)lifetime);
+		particleGen.Set("amount",cap);
 	}
 }

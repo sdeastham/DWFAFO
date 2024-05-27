@@ -24,3 +24,4 @@ script = ExtResource("1_vvny6")
 
 [node name="ParticleSpawner" type="GPUParticles2D" parent="."]
 process_material = SubResource("ParticleProcessMaterial_8ibcl")
+lifetime = 5.0
