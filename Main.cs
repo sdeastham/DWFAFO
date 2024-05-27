@@ -16,6 +16,8 @@ public partial class Main : Node
 	private double _simulationSpeed;
 	private Dictionary<ulong, AirMass> _pointDict;
 	private Vector2 GlobalEarthUpperLeft, GlobalEarthLowerRight;
+	private Vector2 _flightOrigin, _flightDestination;
+	private bool _originSelected;
 
 	private bool _idle;
 	
@@ -26,6 +28,9 @@ public partial class Main : Node
 		TextureRect earth = GetNode<TextureRect>("EarthMap");
 		GlobalEarthUpperLeft = earth.GetGlobalTransform() * (new Vector2(0,0));
 		GlobalEarthLowerRight = earth.GetGlobalTransform() * earth.Size;
+		
+		// Start with no origin selcted
+		_originSelected = false;
 		
 		_simulationSpeed = 1.0; // Simulation hours per wall-clock second
 		_idle = true;
@@ -269,7 +274,6 @@ public partial class Main : Node
 	public override void _Input(InputEvent @event)
 	{
 		// Place a new air mass wherever we click
-		if (!_idle) { return; }
 		if (@event is InputEventMouseButton eventMouseButton && @event.IsPressed()
 			&& eventMouseButton.ButtonIndex == MouseButton.Left)
 		{
@@ -277,8 +281,37 @@ public partial class Main : Node
 			//Vector2 mouseLoc = eventMouseButton.Position;
 			// Cheating and just asking the camera where the mouse is
 			Vector2 newLoc = GetNode<Camera2D>("Camera").GetGlobalMousePosition();
-			(float lon, float lat) = XYToLonLat(newLoc.X, newLoc.Y);
-			((IdleSimulator)_simulator).CreateInteractivePoint(lon, lat);
+			// For an idle simulation, this is straightforward
+			if (_idle)
+			{
+				(float lon, float lat) = XYToLonLat(newLoc.X, newLoc.Y);
+				((IdleSimulator)_simulator).CreateInteractivePoint(lon, lat);
+				return;
+			}
+			// For a full simulation, was this the first or second click?
+			if (!_originSelected)
+			{
+				_flightOrigin = newLoc;
+				_originSelected = true;
+				Node2D originMarker = GetNode<Node2D>("OriginMarker");
+				originMarker.Position = newLoc;
+				// Before showing the particle manager, reset it - otherwise get some very weird effects
+				GpuParticles2D particles;
+				particles = originMarker.GetNode<GpuParticles2D>("OriginParticlesA");
+				particles.Restart();
+				particles = originMarker.GetNode<GpuParticles2D>("OriginParticlesB");
+				particles.Restart();
+				// Show the node to which they are connected
+				originMarker.Show();
+			}
+			else
+			{
+				_flightDestination = newLoc;
+				_originSelected = false;
+				// Run flight!
+				Node2D originMarker = GetNode<Node2D>("OriginMarker");
+				originMarker.Hide();
+			}
 		}
 	}
 }
