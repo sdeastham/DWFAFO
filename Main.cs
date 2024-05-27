@@ -12,9 +12,7 @@ public partial class Main : Node
 {
 	[Export]
 	public PackedScene AirMassScene {get;set;}
-
-	private IdleSimulator _idleSimulator;
-	private Simulator _mainSimulator;
+	private ISimulator _simulator;
 	private double _simulationSpeed;
 
 	private bool Idle;
@@ -47,20 +45,23 @@ public partial class Main : Node
 		hud.GetNode<ColorRect>("Blackout").Color = Color.Color8(0,0,0,128);
 		
 		// Set up the full simulator
-		_mainSimulator = new Simulator();
+		Simulator mainSimulator = new Simulator();
 		// Run the configuration/initial loading asynchronously; this ensures that the main
 		// thread does not block. Also, the user gets to keep playing with the idle simulator
-		await Task.Run(() => _mainSimulator.Initialize(pathToConfig));
+		await Task.Run(() => mainSimulator.Initialize(pathToConfig));
 		// Once complete, kill the idle simulation and remove the veil
 		StopIdleSimulation();
-		hud.GetNode<Label>("UserMessage").Hide();
+		_simulator = mainSimulator;
+		//usrMsg.Hide();
 		hud.GetNode<ColorRect>("Blackout").Hide();
+		// Reduce the simulation speed
+		_simulationSpeed = 60.0/3600.0; // Simulation hours per wall-clock second
 	}
 	
 	private void StopIdleSimulation()
 	{
 		GetTree().CallGroup("AllPoints", Node.MethodName.QueueFree);
-		_idleSimulator.ClearList();
+		((IdleSimulator)_simulator).ClearList();
 		var oldNodes = GetTree().GetNodesInGroup("AllPoints");
 		foreach (AirMass airMass in oldNodes)
 		{
@@ -73,18 +74,23 @@ public partial class Main : Node
 	{
 		// Create the simulator
 		Idle = true;
-		_idleSimulator = new IdleSimulator();
+		_simulator = new IdleSimulator();
 		
 		// Start with some non-zero number of points
-		const int nLocations = 70;
-		_idleSimulator.GenerateRandomPoints(nLocations);
-		IEnumerable<Dot> points = _idleSimulator.GetPointData();
+		const int nLocations = 700;
+		((IdleSimulator)_simulator).GenerateRandomPoints(nLocations);
+		IEnumerable<Dot> points = _simulator.GetPointData();
 		foreach (Dot point in points)
 		{
 			CreateAirMass(point.X,point.Y,point.UniqueIdentifier);
 		}
 	}
 
+	public override void _PhysicsProcess(double delta)
+	{
+		_simulator.Advance(delta * _simulationSpeed * 3600.0);
+	}
+	
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
@@ -96,22 +102,29 @@ public partial class Main : Node
 			//AirMass airMass = node.GetNode<AirMass>("AirMass");
 			node.Live = false;
 		}
-
-		Dot[] newPoints;
-		if (Idle)
+		
+		Dot[] newPoints = _simulator.GetPointData().ToArray();
+		
+		// Let the user know how far we have gotten
+		if (!Idle)
 		{
-			// Advance the external simulation
-			_idleSimulator.AdvanceSimulation(delta * _simulationSpeed * 3600.0);
-
-			// Call an external function to get a list of the current node locations
-			newPoints = _idleSimulator.GetPointData().ToArray();
-		}
-		else
-		{
-			_mainSimulator.Advance(delta * _simulationSpeed * 3600.0);
-			newPoints = _mainSimulator.GetPointData().ToArray();
+			Hud? hud = GetNode<Hud>("HUD");
+			Label? usrMsg = hud.GetNode<Label>("UserMessage");
+			usrMsg.Text = $"{_simulator.GetCurrentTime()}";
 		}
 
+		double framerate = Engine.GetFramesPerSecond();  
+		GD.Print($"Frame rate: {framerate,10:f2}; point count: {newPoints.Length}");
+		return;
+		// What if I just delete all the old ones and generate new ones?
+		/*
+		GetTree().CallGroup("AllPoints", Node.MethodName.QueueFree);
+		foreach (Dot point in newPoints)
+		{
+			CreateAirMass(point.X, point.Y, point.UniqueIdentifier);
+		}
+		*/
+		
 		foreach (Dot point in newPoints)
 		{
 			// Is this an existing air mass?
@@ -138,6 +151,9 @@ public partial class Main : Node
 			if (airMass.Live) continue;
 			airMass.KillNode();
 		}
+
+		GD.Print($"Time per frame: {delta,10:f2}; points: {newPoints.Length,10:d}");
+
 	}
 	
 	public void CreateAirMass(float longitude, float latitude, ulong uid)
@@ -182,16 +198,13 @@ public partial class Main : Node
 	public override void _Input(InputEvent @event)
 	{
 		// Place a new air mass wherever we click
+		if (!Idle) { return; }
 		if (@event is InputEventMouseButton eventMouseButton && @event.IsPressed()
 			&& eventMouseButton.ButtonIndex == MouseButton.Left)
 		{
 			Vector2 newLoc = eventMouseButton.Position;
-			//float x = newLoc.X;
-			//float y = newLoc.Y;
-			//CreateAirMassXY(x,y,0);
 			(float lon, float lat) = XYToLonLat(newLoc.X, newLoc.Y);
-			//GD.Print($"{newLoc.X} -> {lon}, {newLoc.Y} -> {lat}");
-			_idleSimulator.CreateInteractivePoint(lon, lat);
+			((IdleSimulator)_simulator).CreateInteractivePoint(lon, lat);
 		}
 	}
 }

@@ -4,11 +4,12 @@ using Godot;
 
 namespace GoDots;
 
-public class IdleSimulator
+public class IdleSimulator : ISimulator
 {
 	private readonly LinkedList<Dot> _pointList;
 	private readonly RandomNumberGenerator _random;
 	private ulong _nextUniqueIdentifier;
+	private DateTime CurrentTime;
 
 	public IdleSimulator()
 	{
@@ -16,6 +17,7 @@ public class IdleSimulator
 		_random.Randomize();
 		_nextUniqueIdentifier = 1;
 		_pointList = new LinkedList<Dot>();
+		CurrentTime = DateTime.Now;
 	}
 
 	public void ClearList()
@@ -23,7 +25,7 @@ public class IdleSimulator
 		_pointList.Clear();
 	}
 	
-	public void AdvanceSimulation(double timeStep)
+	public void Advance(double timeStep)
 	{
 		// Rate of new point creation, in points per hour
 		double newPointRate = 1.0 / 3600.0;
@@ -75,6 +77,13 @@ public class IdleSimulator
 			}
 			node = nextNode;
 		}
+
+		CurrentTime += TimeSpan.FromSeconds(timeStep);
+	}
+
+	public DateTime GetCurrentTime()
+	{
+		return CurrentTime;
 	}
 
 	public IEnumerable<Dot> GetPointData()

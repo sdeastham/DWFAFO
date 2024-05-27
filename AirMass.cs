@@ -21,13 +21,12 @@ public partial class AirMass : Node2D
 	{
 		UniqueIdentifier = uid;
 	}
-	/*
+
 	public override void _Draw()
 	{
 		DrawRect(new Rect2(-1.0f, -1.0f, 1.0f, 1.0f), Colors.Green);
 	}
-	*/
-	
+
 	private void OnVisibleOnScreenNotifier2DScreenExited()
 	{
 		KillNode();
@@ -68,12 +67,6 @@ public partial class AirMass : Node2D
 			hue = (float)c;
 		}
 		var newColor = Color.FromHsv(hue,0.8f,0.9f,alpha);
-		/*
-		float rColor = GD.Randf() * 0.5f + 0.5f;
-		float gColor = GD.Randf() * 0.5f + 0.5f;
-		float bColor = GD.Randf() * 0.5f + 0.5f;
-		var newColor = new Color(rColor,gColor,bColor,alpha);
-		*/
 		particleGen.ProcessMaterial.Set("color",newColor);
 	}
 }

@@ -9,7 +9,7 @@ using MathNet.Numerics.Random;
 
 namespace GoDots;
 
-public class Simulator
+public class Simulator : ISimulator
 {
 	private readonly System.Collections.Generic.Dictionary<string, Stopwatch> Stopwatches;
 	private RunOptions _configOptions;
@@ -107,8 +107,10 @@ public class Simulator
 		// This won't necessarily be smooth because the priority is to make the simulation repeatable rather than
 		// visually appealing. As such, we will have a cap on frame rate, and if we achieve it - great. If not, the
 		// simulation will just proceed as fast as the computer will allow.
-		int nSteps = (int)Math.Round(timePerFrame / _timeManager.dt);
-		for (int iter = 0; iter < nSteps; iter++)
+		// Two possibilities: either we need to simulate multiple steps per frame, or the frame might be too short!
+		_timeManager.AdvanceExternal(timePerFrame);
+		//GD.Print($"Current: {_timeManager.CurrentTime}/External: {_timeManager.ExternalTime}");
+		while (_timeManager.CurrentTime < _timeManager.ExternalTime)
 		{
 			if (_configOptions.TimeDependentMeteorology)
 			{
@@ -223,6 +225,7 @@ public class Simulator
 		public double ReportTime { get; private set; }
 		public double StorageTime { get; private set; }
 		public double OutputTime { get; private set; }
+		public double ExternalTime { get; private set; }
 		// Time steps
 		public double SimulateStep { get; private set; }
 		public double ReportStep { get; private set; }
@@ -270,6 +273,9 @@ public class Simulator
 			OutputTime = StartTime + OutputStep; // Next time we want the in-memory archive to be written to file
 			// Time step expressed as a time delta
 			StepSpan = TimeSpan.FromSeconds(dt);
+			
+			// This is the time that the external/calling program thinks we are at
+			ExternalTime = CurrentTime;
 		}
 
 		public void Advance()
@@ -278,5 +284,17 @@ public class Simulator
 			CurrentDate += StepSpan;
 			StepCount += 1;
 		}
+
+		public void AdvanceExternal(double externalTimeStep)
+		{
+			ExternalTime += externalTimeStep;
+		}
+	}
+	
+	public DateTime GetCurrentTime()
+	{
+		// Return the interpolated (external) date rather than the last simulated date
+		//return _timeManager.CurrentDate;
+		return _timeManager.ReferenceDate + TimeSpan.FromSeconds(_timeManager.ExternalTime);
 	}
 }
