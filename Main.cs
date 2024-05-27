@@ -115,29 +115,11 @@ public partial class Main : Node
 			Label? usrMsg = hud.GetNode<Label>("UserMessage");
 			usrMsg.Text = $"{_simulator.GetCurrentTime()}";
 		}
-
-		double framerate = Engine.GetFramesPerSecond();  
-		GD.Print($"Frame rate: {framerate,10:f2}; point count: {newPoints.Length}");
 		
 		foreach (Dot point in newPoints)
 		{
 			// Is this an existing air mass?
-			bool matched = _pointDict.ContainsKey(point.UniqueIdentifier);
-			/*
-			bool matched = false;
-			foreach (AirMass airMass in oldNodes)
-			{
-				ulong nodeUID = airMass.UniqueIdentifier;
-				matched = nodeUID == point.UniqueIdentifier;
-				if (!matched) continue;
-				airMass.Live = true;
-				(float x, float y) = LonLatToXY(point.X, point.Y);
-				Vector2 transformedLocation = new Vector2(x, y);
-				//airMass.UpdatePosition(transformedLocation);
-				break;
-			}
-			*/
-			if (matched)
+			if (_pointDict.ContainsKey(point.UniqueIdentifier))
 			{
 				AirMass airMass = _pointDict[point.UniqueIdentifier];
 				airMass.Live = true;
@@ -156,6 +138,9 @@ public partial class Main : Node
 			if (airMass.Live) continue;
 			DeleteAirMass(airMass.UniqueIdentifier);
 		}
+		
+		double framerate = Engine.GetFramesPerSecond();  
+		GD.Print($"Frame rate: {framerate,10:f2}; point count: {_pointDict.Count}");
 	}
 	
 	public void CreateAirMass(float longitude, float latitude, ulong uid)

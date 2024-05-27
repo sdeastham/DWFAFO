@@ -1,4 +1,4 @@
-﻿---
+---
 timing:
   start-date: "2023-01-01 00:00:00"
   end-date: "2023-01-02 00:00:00"
@@ -12,39 +12,39 @@ timesteps:
   # Frequency data will be written to disk (hh:mm:ss)
   output: 24:00:00
 points-dense:
-  max: 0
+  max: 10000
   initial: 1500
   # Calculate delta T due to pressure change?
   adiabatic-compression: true
   kg-per-point: 2.0e13
   output-filename: dense-points-{date}.nc
   output-variables: [ "temperature",
-                      "relative_humidity_ice",
-                      "relative_humidity_liquid",
-                      "specific_humidity"]
+					  "relative_humidity_ice",
+					  "relative_humidity_liquid",
+					  "specific_humidity"]
 points-flights:
   schedule-filename: "schedule_large_ranged.csv"
   airports-filename: "airports_large.csv"
   segments-filename: null
   use-icao: true
-  max: null
+  max: 0
   adiabatic-compression: true
   output-filename: flight-waypoints-{date}.nc
   output-variables: ["segment_length",
-                     "segment_stretch",
-                     "segment_orientation",
-                     "segment_tail_longitude",
-                     "segment_tail_latitude",
-                     "segment_tail_pressure",
-                     "contrail_ice_mass",
-                     "contrail_settling_velocity",
-                     "contrail_crystal_radius",
-                     "contrail_cross_section_area"]
+					 "segment_stretch",
+					 "segment_orientation",
+					 "segment_tail_longitude",
+					 "segment_tail_latitude",
+					 "segment_tail_pressure",
+					 "contrail_ice_mass",
+					 "contrail_settling_velocity",
+					 "contrail_crystal_radius",
+					 "contrail_cross_section_area"]
   write-trajectories: true
   trajectory-filename: trajectories-{date}.parquet
   trajectory-variables: ["segment_length",
-                         "segment_orientation",
-                         "time"]
+						 "segment_orientation",
+						 "time"]
   trajectory-identifier-filename: flightmatch-{date}.parquet
   # Contrail options
   contrail-simulation: true
