@@ -15,12 +15,14 @@ public partial class Main : Node
 
 	private IdleSimulator _idleSimulator;
 	private Simulator _mainSimulator;
+	private double _simulationSpeed;
 
 	private bool Idle;
 	
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
+		_simulationSpeed = 1.0; // Simulation hours per wall-clock second
 		Idle = true;
 		StartIdleSimulation();
 
@@ -95,14 +97,21 @@ public partial class Main : Node
 			node.Live = false;
 		}
 
-		if (!Idle) { return; }
+		Dot[] newPoints;
+		if (Idle)
+		{
+			// Advance the external simulation
+			_idleSimulator.AdvanceSimulation(delta * _simulationSpeed * 3600.0);
 
-		// Advance the external simulation
-		const double simulationHoursPerSecond=1.0;
-		_idleSimulator.AdvanceSimulation(delta * simulationHoursPerSecond * 3600.0);
-		
-		// Call an external function to get a list of the current node locations
-		Dot[] newPoints = _idleSimulator.GetPointData().ToArray();
+			// Call an external function to get a list of the current node locations
+			newPoints = _idleSimulator.GetPointData().ToArray();
+		}
+		else
+		{
+			_mainSimulator.Advance(delta * _simulationSpeed * 3600.0);
+			newPoints = _mainSimulator.GetPointData().ToArray();
+		}
+
 		foreach (Dot point in newPoints)
 		{
 			// Is this an existing air mass?

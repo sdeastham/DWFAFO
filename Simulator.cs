@@ -21,6 +21,7 @@ public class Simulator
 	private readonly List<int> _seedsUsed;
 	private readonly List<PointManager> _pointManagers;
 	private TimeManager _timeManager;
+	private ulong StoredTimePoints;
 	
 	public Simulator()
 	{
@@ -36,7 +37,9 @@ public class Simulator
 		}
 		_seedsUsed = [];
 		_pointManagers = [];
+		StoredTimePoints = 0;
 	}
+	
 	public async Task Initialize(string configFile)
 	{
 		// Read the configuration file
@@ -94,6 +97,61 @@ public class Simulator
 
         // Use a master RNG to generate seeds predictably.  A specific seed can be requested, otherwise chosen randomly
         _masterRandomNumberGenerator = _configOptions.Seed != null ? new SystemRandomSource((int)_configOptions.Seed) : SystemRandomSource.Default;
+
+        SetupPointManagers();
+	}
+	
+	public void Advance(double timePerFrame)
+	{
+		//TODO: Find a robust way to have the simulation advance at a fixed speed regardless of frame rate
+		// This won't necessarily be smooth because the priority is to make the simulation repeatable rather than
+		// visually appealing. As such, we will have a cap on frame rate, and if we achieve it - great. If not, the
+		// simulation will just proceed as fast as the computer will allow.
+		int nSteps = (int)Math.Round(timePerFrame / _timeManager.dt);
+		for (int iter = 0; iter < nSteps; iter++)
+		{
+			if (_configOptions.TimeDependentMeteorology)
+			{
+				_meteorology.AdvanceToTime(_timeManager.CurrentDate);
+				// Calculate derived quantities
+				_domain.UpdateMeteorology();
+			}
+
+			foreach (PointManager pointManager in _pointManagers)
+			{
+				// Seed new points
+				Stopwatches["Point seeding"].Start();
+				pointManager.Seed(_timeManager.dt);
+				Stopwatches["Point seeding"].Stop();
+                    
+				// Do the actual work
+				Stopwatches["Point physics"].Start();
+				pointManager.Advance(_timeManager.dt);
+				Stopwatches["Point physics"].Stop();
+
+				// TODO: Allow for this to not happen every time step
+				Stopwatches["Point culling"].Start();
+				pointManager.Cull();
+				Stopwatches["Point culling"].Stop();
+			}
+			_timeManager.Advance();
+		}
+	}
+	
+	public IEnumerable<Dot> GetPointData()
+	{
+		List<Dot> pointList = [];
+		foreach (PointManager pm in _pointManagers)
+		{
+			foreach (IAdvected advPoint in pm.ActivePoints)
+			{
+				(double x, double y, double p) = advPoint.GetLocation();
+				ulong uid = advPoint.GetUID();
+				Dot point = new Dot((float)x, (float)y, uid, 1.0);
+				pointList.Add(point);
+			}
+		}
+		return pointList;
 	}
 
 	public void SetupPointManagers()
@@ -154,9 +212,6 @@ public class Simulator
         {
             throw new ArgumentException("No point managers enabled.");
         }
-
-        // How many time points have been stored?
-        int nStored = 0;
 	}
 
 	private class TimeManager
@@ -183,6 +238,7 @@ public class Simulator
 		public DateTime CurrentDate { get; private set; }
 		public DateTime StartDate { get; private set; }
 		public DateTime EndDate { get; private set; }
+		public TimeSpan StepSpan { get; private set; }
 
 		internal TimeManager(RunOptions configOptions)
 		{
@@ -212,6 +268,15 @@ public class Simulator
 			ReportTime = StartTime; // Next time we want output to go to the user
 			StorageTime = StartTime + StorageStep; // Next time that we want data to be added to the in-memory archive
 			OutputTime = StartTime + OutputStep; // Next time we want the in-memory archive to be written to file
+			// Time step expressed as a time delta
+			StepSpan = TimeSpan.FromSeconds(dt);
+		}
+
+		public void Advance()
+		{
+			CurrentTime += dt;
+			CurrentDate += StepSpan;
+			StepCount += 1;
 		}
 	}
 }
