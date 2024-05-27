@@ -9,13 +9,20 @@
 script = ExtResource("1_anyro")
 AirMassScene = ExtResource("2_6etq6")
 
-[node name="TextureRect" type="TextureRect" parent="."]
+[node name="EarthMap" type="TextureRect" parent="."]
 offset_right = 5400.0
 offset_bottom = 2700.0
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("3_txfug")
 
 [node name="HUD" parent="." instance=ExtResource("4_vwp7e")]
+
+[node name="Camera" type="Camera2D" parent="."]
+position = Vector2(540, 270)
+limit_left = 0
+limit_top = 0
+limit_right = 1080
+limit_bottom = 540
 
 [connection signal="StartSimulation" from="HUD" to="." method="StartSimulation"]
 [connection signal="UpdateSpeed" from="HUD" to="." method="UpdateSimulationSpeed"]

@@ -111,6 +111,11 @@ public class Simulator : ISimulator
         UpdatePointDictionaries();
 	}
 
+	public (double[], double[]) GetLonLatBounds()
+	{
+		return (_domain.XLims, _domain.YLims);
+	}
+
 	private void UpdatePointDictionaries()
 	{
 		// Replace the point list...

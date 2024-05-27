@@ -15,12 +15,18 @@ public partial class Main : Node
 	private ISimulator _simulator;
 	private double _simulationSpeed;
 	private Dictionary<ulong, AirMass> _pointDict;
+	private Vector2 GlobalEarthUpperLeft, GlobalEarthLowerRight;
 
 	private bool _idle;
 	
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
+		// Get the location of 90N/180E and 90S/180W in global coordinates
+		TextureRect earth = GetNode<TextureRect>("EarthMap");
+		GlobalEarthUpperLeft = earth.GetGlobalTransform() * (new Vector2(0,0));
+		GlobalEarthLowerRight = earth.GetGlobalTransform() * earth.Size;
+		
 		_simulationSpeed = 1.0; // Simulation hours per wall-clock second
 		_idle = true;
 		_pointDict = [];
@@ -34,6 +40,50 @@ public partial class Main : Node
 			ncPath = "C:/Program Files/netCDF 4.9.2/lib/netcdf.lib";
 			Environment.SetEnvironmentVariable("LIBNETCDFPATH", ncPath);
 		}
+		// Set the camera position etc.
+		//ShowRegion(-180.0f, 0.0f, 0.0f, 90.0f);
+		ShowRegion(0.0f, 180.0f, -90.0f, 0.0f);
+		// Standard global view
+		//ShowRegion(-180f, 180f, -90f, 90f);
+		RandomNumberGenerator random = new RandomNumberGenerator();
+		random.Randomize();
+		// Use a zoom of 2 and pick somewhere at random
+		float lonMid = random.Randf() * 180.0f - 90.0f;
+		float latMid = random.Randf() * 90.0f - 45.0f;
+		ShowRegion(lonMid - 90.0f, lonMid + 90.0f, latMid - 45.0f, latMid + 45.0f);
+	}
+
+	public void ShowRegion(float lonWest, float lonEast, float latSouth, float latNorth, bool allowBlank=false)
+	{
+		// Moves and zooms the camera to accommodate the target area
+		// If allowBlank is true, then the priority is to include as much of the target region as possible
+		// If false, then the priority is to ensure that the entire camera view is within the target region
+		float lonMid = (lonWest + lonEast) / 2.0f;
+		float latMid = (latSouth + latNorth) / 2.0f;
+		float lonSpan = lonEast - lonWest;
+		float latSpan = latNorth - latSouth;
+		(float xSpan, float ySpan) = GetViewport().GetVisibleRect().Size;
+		float xyRatio = xSpan / ySpan;
+		float lonlatRatio = lonSpan / latSpan;
+		// If target region is wider than the view region (per unit of vertical space) then using the
+		// vertical extent to limit the camera view will result in points being cropped out, and vice
+		// versa. xor expresses this nicely.
+		bool fitVertical = (lonlatRatio > xyRatio) ^ (allowBlank);
+		// Recall that 2 means we are zoomed in, 0.5 means we are zoomed out
+		float zoomFactor;
+		if (fitVertical)
+		{
+			// Set zoom based on vertical extent
+			zoomFactor = 180.0f/latSpan;
+		}
+		else
+		{
+			// Set zoom based on horizontal extent
+			zoomFactor = 360.0f/lonSpan;
+		}
+		Camera2D camera = GetNode<Camera2D>("Camera");
+		camera.Position = LonLatToXYVector(lonMid, latMid);
+		camera.Zoom = new Vector2(zoomFactor, zoomFactor);
 	}
 
 	public async void StartSimulation(string pathToConfig)
@@ -54,6 +104,8 @@ public partial class Main : Node
 		// Once complete, kill the idle simulation and remove the veil
 		StopIdleSimulation();
 		_simulator = mainSimulator;
+		(double[] lonLims, double[] latLims) = mainSimulator.GetLonLatBounds();
+		ShowRegion((float)lonLims[0], (float)lonLims[^1], (float)latLims[0], (float)latLims[^1]);
 		//usrMsg.Hide();
 		hud.GetNode<ColorRect>("Blackout").Hide();
 		// Reduce the simulation speed
@@ -66,7 +118,6 @@ public partial class Main : Node
 
 	public void UpdateSimulationSpeed(float newSpeed)
 	{
-		GD.Print(newSpeed);
 		// Simulation speed is simulated hours per real-time second
 		// newSpeed is simulated minutes per real-time second
 		_simulationSpeed = newSpeed / 60.0;
@@ -140,9 +191,9 @@ public partial class Main : Node
 		foreach (Dot point in newPoints)
 		{
 			// Is this an existing air mass?
-			if (_pointDict.ContainsKey(point.UniqueIdentifier))
+			if (_pointDict.TryGetValue(point.UniqueIdentifier, out AirMass? value))
 			{
-				AirMass airMass = _pointDict[point.UniqueIdentifier];
+				AirMass airMass = value;
 				airMass.Live = true;
 				(float x, float y) = LonLatToXY(point.X, point.Y);
 				Vector2 transformedLocation = new Vector2(x, y);
@@ -160,20 +211,14 @@ public partial class Main : Node
 			DeleteAirMass(airMass.UniqueIdentifier);
 		}
 		
-		double framerate = Engine.GetFramesPerSecond();  
-		GD.Print($"Frame rate: {framerate,10:f2}; point count: {_pointDict.Count}");
+		//double framerate = Engine.GetFramesPerSecond();  
+		//GD.Print($"Frame rate: {framerate,10:f2}; point count: {_pointDict.Count}");
 	}
 	
 	public void CreateAirMass(float longitude, float latitude, ulong uid)
 	{
-		(float x,float y) = LonLatToXY(longitude,latitude);
-		CreateAirMassXY(x,y,uid);
-	}
-	
-	public void CreateAirMassXY(float x, float y, ulong uid)
-	{
 		AirMass dot = AirMassScene.Instantiate<AirMass>();
-		dot.SetProperties(x,y);
+		dot.SetProperties(longitude,latitude);
 		dot.SetUniqueIdentifier(uid);
 		//dot.UpdateColor(Color.Color8(255,0,0,127));
 		dot.UpdateColor(Color.Color8(255,255,255,127));
@@ -191,10 +236,17 @@ public partial class Main : Node
 	
 	public (float, float) XYToLonLat(float x, float y)
 	{
-		Vector2 viewportSize = GetViewport().GetVisibleRect().Size;
-		// Reflect latitude
-		return (360.0f * (x/viewportSize.X) - 180.0f,-1.0f * (180.0f * (y/viewportSize.Y) - 90.0f));
+		// Convert from global coordinates to longitude and latitude
+		Vector2 earthSize = GlobalEarthLowerRight - GlobalEarthUpperLeft;
+		return (360.0f * (x/earthSize.X) - 180.0f,-1.0f * (180.0f * (y/earthSize.Y) - 90.0f));
 	}
+
+	public Vector2 LonLatToXYVector(float longitude, float latitude)
+	{
+		(float x, float y) = LonLatToXY(longitude, latitude);
+		return new Vector2(x, y);
+	}
+	
 	public (float,float) LonLatToXY(float longitude, float latitude)
 	{
 		// Longitude can wrap around - get it into the range of -180 : 180
@@ -207,9 +259,9 @@ public partial class Main : Node
 		{
 			lonMod -= 360.0f;
 		}
-		Vector2 viewportSize = GetViewport().GetVisibleRect().Size;
-		float xScaling = viewportSize.X / 360.0f;
-		float yScaling = viewportSize.Y / 180.0f;
+		Vector2 earthSize = GlobalEarthLowerRight - GlobalEarthUpperLeft;
+		float xScaling = earthSize.X / 360.0f;
+		float yScaling = earthSize.Y / 180.0f;
 		// Also need to reflect latitude
 		return ((lonMod+180)*xScaling,(180.0f - (latitude+90.0f))*yScaling);
 	}
@@ -221,7 +273,10 @@ public partial class Main : Node
 		if (@event is InputEventMouseButton eventMouseButton && @event.IsPressed()
 			&& eventMouseButton.ButtonIndex == MouseButton.Left)
 		{
-			Vector2 newLoc = eventMouseButton.Position;
+			// mouseLoc is in the coordinates of... no idea, actually
+			//Vector2 mouseLoc = eventMouseButton.Position;
+			// Cheating and just asking the camera where the mouse is
+			Vector2 newLoc = GetNode<Camera2D>("Camera").GetGlobalMousePosition();
 			(float lon, float lat) = XYToLonLat(newLoc.X, newLoc.Y);
 			((IdleSimulator)_simulator).CreateInteractivePoint(lon, lat);
 		}
