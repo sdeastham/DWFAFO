@@ -93,6 +93,7 @@ tooltip_text = "Speed slider (simulation minutes per user second)"
 max_value = 180.0
 value = 1.0
 rounded = true
+tick_count = 12
 ticks_on_borders = true
 
 [connection signal="pressed" from="ConfigSelectButton" to="." method="OnChooseFileButtonPressed"]
