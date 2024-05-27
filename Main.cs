@@ -14,6 +14,7 @@ public partial class Main : Node
 	public PackedScene AirMassScene {get;set;}
 	private ISimulator _simulator;
 	private double _simulationSpeed;
+	private Dictionary<ulong, AirMass> _pointDict;
 
 	private bool Idle;
 	
@@ -22,6 +23,7 @@ public partial class Main : Node
 	{
 		_simulationSpeed = 1.0; // Simulation hours per wall-clock second
 		Idle = true;
+		_pointDict = [];
 		StartIdleSimulation();
 
 		// In case this is not set by the user..
@@ -68,6 +70,7 @@ public partial class Main : Node
 			airMass.KillNode();
 		}
 		Idle = false;
+		_pointDict.Clear();
 	}
 
 	public void StartIdleSimulation()
@@ -115,19 +118,12 @@ public partial class Main : Node
 
 		double framerate = Engine.GetFramesPerSecond();  
 		GD.Print($"Frame rate: {framerate,10:f2}; point count: {newPoints.Length}");
-		return;
-		// What if I just delete all the old ones and generate new ones?
-		/*
-		GetTree().CallGroup("AllPoints", Node.MethodName.QueueFree);
-		foreach (Dot point in newPoints)
-		{
-			CreateAirMass(point.X, point.Y, point.UniqueIdentifier);
-		}
-		*/
 		
 		foreach (Dot point in newPoints)
 		{
 			// Is this an existing air mass?
+			bool matched = _pointDict.ContainsKey(point.UniqueIdentifier);
+			/*
 			bool matched = false;
 			foreach (AirMass airMass in oldNodes)
 			{
@@ -137,23 +133,29 @@ public partial class Main : Node
 				airMass.Live = true;
 				(float x, float y) = LonLatToXY(point.X, point.Y);
 				Vector2 transformedLocation = new Vector2(x, y);
-				airMass.UpdatePosition(transformedLocation);
+				//airMass.UpdatePosition(transformedLocation);
 				break;
 			}
-			if (!matched)
+			*/
+			if (matched)
+			{
+				AirMass airMass = _pointDict[point.UniqueIdentifier];
+				airMass.Live = true;
+				(float x, float y) = LonLatToXY(point.X, point.Y);
+				Vector2 transformedLocation = new Vector2(x, y);
+				airMass.UpdatePosition(transformedLocation);
+			}
+			else
 			{
 				CreateAirMass(point.X, point.Y, point.UniqueIdentifier);
 			}
 		}
-
+		
 		foreach (AirMass airMass in oldNodes)
 		{
 			if (airMass.Live) continue;
-			airMass.KillNode();
+			DeleteAirMass(airMass.UniqueIdentifier);
 		}
-
-		GD.Print($"Time per frame: {delta,10:f2}; points: {newPoints.Length,10:d}");
-
 	}
 	
 	public void CreateAirMass(float longitude, float latitude, ulong uid)
@@ -167,7 +169,15 @@ public partial class Main : Node
 		AirMass dot = AirMassScene.Instantiate<AirMass>();
 		dot.SetProperties(x,y);
 		dot.SetUniqueIdentifier(uid);
+		_pointDict[dot.UniqueIdentifier] = dot;
 		AddChild(dot);
+	}
+
+	private void DeleteAirMass(ulong uid)
+	{
+		AirMass airMass = _pointDict[uid];
+		airMass.KillNode();
+		_pointDict.Remove(uid);
 	}
 	
 	public (float, float) XYToLonLat(float x, float y)

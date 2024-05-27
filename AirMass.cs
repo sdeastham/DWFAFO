@@ -21,10 +21,10 @@ public partial class AirMass : Node2D
 	{
 		UniqueIdentifier = uid;
 	}
-
+	
 	public override void _Draw()
 	{
-		DrawRect(new Rect2(-1.0f, -1.0f, 1.0f, 1.0f), Colors.Green);
+		DrawRect(new Rect2(-0.5f, -0.5f, 1.0f, 1.0f), Colors.WhiteSmoke);
 	}
 
 	private void OnVisibleOnScreenNotifier2DScreenExited()

@@ -23,4 +23,5 @@ script = ExtResource("1_vvny6")
 [node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="."]
 
 [node name="ParticleSpawner" type="GPUParticles2D" parent="."]
+emitting = false
 process_material = SubResource("ParticleProcessMaterial_8ibcl")
