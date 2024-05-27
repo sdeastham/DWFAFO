@@ -106,6 +106,31 @@ public class Simulator : ISimulator
         _masterRandomNumberGenerator = _configOptions.Seed != null ? new SystemRandomSource((int)_configOptions.Seed) : SystemRandomSource.Default;
 
         SetupPointManagers();
+        
+        // Populate point storage for interpolation
+        UpdatePointDictionaries();
+	}
+
+	private void UpdatePointDictionaries()
+	{
+		// Replace the point list...
+		_oldPoints.Clear();
+		foreach (Dot point in _newPoints.Values)
+		{
+			_oldPoints[point.UniqueIdentifier] = point;
+		}
+
+		_newPoints.Clear();
+		foreach (PointManager pm in _pointManagers)
+		{
+			foreach (IAdvected advPoint in pm.ActivePoints)
+			{
+				(double x, double y, double p) = advPoint.GetLocation();
+				ulong uid = advPoint.GetUID();
+				Dot point = new Dot((float)x, (float)y, uid, 1.0);
+				_newPoints.Add(uid, point);
+			}
+		}
 	}
 	
 	public void Advance(double timePerFrame)
@@ -113,7 +138,7 @@ public class Simulator : ISimulator
 		// This is called from the physics processor, which should ensure it proceeds at the desired rate
 		// Two possibilities: either we need to simulate multiple steps per frame, or the frame might be too short!
 		_timeManager.AdvanceExternal(timePerFrame);
-		//GD.Print($"Current: {_timeManager.CurrentTime}/External: {_timeManager.ExternalTime}");
+		bool anySteps = false;
 		while (_timeManager.CurrentTime <= _timeManager.ExternalTime)
 		{
 			if (_configOptions.TimeDependentMeteorology)
@@ -141,43 +166,35 @@ public class Simulator : ISimulator
 				Stopwatches["Point culling"].Stop();
 			}
 			_timeManager.Advance();
+			anySteps = true;
 		}
-		// Replace the point list...
-		_oldPoints.Clear();
-		foreach (Dot point in _newPoints.Values)
-		{
-			_oldPoints[point.UniqueIdentifier] = point;
-		}
-		_newPoints.Clear();
-		foreach (PointManager pm in _pointManagers)
-		{
-			foreach (IAdvected advPoint in pm.ActivePoints)
-			{
-				(double x, double y, double p) = advPoint.GetLocation();
-				ulong uid = advPoint.GetUID();
-				Dot point = new Dot((float)x, (float)y, uid, 1.0);
-				_newPoints.Add(uid,point);
-			}
-		}
+		if (anySteps) { UpdatePointDictionaries(); }
 	}
 	
 	public IEnumerable<Dot> GetPointData()
 	{
-		/*
-		List<Dot> pointList = [];
-		foreach (PointManager pm in _pointManagers)
+		//return _newPoints.Values.ToArray();
+		double physicsStep = _timeManager.dt;
+		double timeToNext = _timeManager.CurrentTime - _timeManager.ExternalTime;
+		double stepFraction = 1.0 - (timeToNext / physicsStep);
+		List<Dot> interpPoints = [];
+		foreach (Dot point in _oldPoints.Values)
 		{
-			foreach (IAdvected advPoint in pm.ActivePoints)
+			if (_newPoints.ContainsKey(point.UniqueIdentifier))
 			{
-				(double x, double y, double p) = advPoint.GetLocation();
-				ulong uid = advPoint.GetUID();
-				Dot point = new Dot((float)x, (float)y, uid, 1.0);
-				pointList.Add(point);
+				Dot newPoint = _newPoints[point.UniqueIdentifier];
+				float oldX = point.X;
+				float oldY = point.Y;
+				float newX = newPoint.X;
+				float newY = newPoint.Y;
+				float x = (float)(stepFraction * (newX - oldX)) + oldX;
+				float y = (float)(stepFraction * (newY - oldY)) + oldY;
+				Dot tempPoint = new Dot(x, y, point.UniqueIdentifier, point.MaxLifetime);
+				tempPoint.Age = point.Age;
+				interpPoints.Add(tempPoint);
 			}
 		}
-		return pointList;
-		*/
-		return _newPoints.Values.ToArray();
+		return interpPoints;
 	}
 
 	public void SetupPointManagers()
