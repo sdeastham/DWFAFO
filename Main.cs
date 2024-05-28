@@ -61,7 +61,7 @@ public partial class Main : Node
 		float latMid = random.Randf() * 90.0f - 45.0f;
 		ShowRegion(lonMid - 90.0f, lonMid + 90.0f, latMid - 45.0f, latMid + 45.0f);
 		*/
-		Line2D flightPath = GetNode<Line2D>("FlightPath");
+		Line2D flightPath = GetNode<Hud>("HUD").GetNode<Line2D>("FlightPath");
 		flightPath.Hide();
 	}
 
@@ -234,13 +234,15 @@ public partial class Main : Node
 
 	private void DrawFlightPath()
 	{
+		Camera2D camera = GetNode<Camera2D>("Camera");
+		// Update scale of origin marker
 		// Draw line from origin marker to mouse
-		Vector2 newLoc = GetNode<Camera2D>("Camera").GetGlobalMousePosition();
+		Vector2 newLoc = camera.GetGlobalMousePosition();
 		bool outOfWindow = newLoc.X < 0 || newLoc.Y < 0 || newLoc.X > GlobalEarthLowerRight[0] ||
 		                   newLoc.Y > GlobalEarthLowerRight[1];
 		if (outOfWindow) { return; }
 		(float lonMouse, float latMouse) = XYToLonLat(newLoc.X, newLoc.Y);
-		Line2D flightPath = GetNode<Line2D>("FlightPath");
+		Line2D flightPath = GetNode<Hud>("HUD").GetNode<Line2D>("FlightPath");
 		(double[] lons, double[] lats, _) = AtmosTools.Geodesy.GreatCircleWaypointsByCount(_originLonLat.X, _originLonLat.Y, 
 			lonMouse, latMouse, FlightPathPointCount);
 		for (int i = 1; i < (FlightPathPointCount-1); i++)
@@ -342,7 +344,7 @@ public partial class Main : Node
 		if (_originSelected) { return; }
 		_flightOrigin = xyLoc;
 		_originSelected = true;
-		Node2D originMarker = GetNode<Node2D>("OriginMarker");
+		Node2D originMarker = GetNode<Hud>("HUD").GetNode<Node2D>("OriginMarker");
 		originMarker.Position = xyLoc;
 		(_originLonLat.X, _originLonLat.Y) = XYToLonLat(xyLoc.X, xyLoc.Y);
 		// Before showing the particle manager, reset it - otherwise get some very weird effects
@@ -355,7 +357,7 @@ public partial class Main : Node
 		particles.Restart();
 		// Show the node to which they are connected
 		originMarker.Show();
-		Line2D flightPath = GetNode<Line2D>("FlightPath");
+		Line2D flightPath = GetNode<Hud>("HUD").GetNode<Line2D>("FlightPath");
 		flightPath.ClearPoints();
 		for (int i = 0; i < FlightPathPointCount; i++)
 		{
@@ -370,9 +372,9 @@ public partial class Main : Node
 		_flightDestination = xyLoc;
 		_originSelected = false;
 		// Run flight!
-		Node2D originMarker = GetNode<Node2D>("OriginMarker");
+		Node2D originMarker = GetNode<Hud>("HUD").GetNode<Node2D>("OriginMarker");
 		originMarker.Hide();
-		Line2D flightPath = GetNode<Line2D>("FlightPath");
+		Line2D flightPath = GetNode<Hud>("HUD").GetNode<Line2D>("FlightPath");
 		flightPath.Hide();
 		flightPath.ClearPoints();
 	}

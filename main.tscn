@@ -1,65 +1,9 @@
-[gd_scene load_steps=17 format=3 uid="uid://chy61f20xgwvj"]
+[gd_scene load_steps=5 format=3 uid="uid://chy61f20xgwvj"]
 
 [ext_resource type="Script" path="res://Main.cs" id="1_anyro"]
 [ext_resource type="PackedScene" uid="uid://ctw0lq6v6yllf" path="res://air_mass.tscn" id="2_6etq6"]
 [ext_resource type="Texture2D" uid="uid://vhrytdvpmuo2" path="res://textures/world.200407.3x5400x2700.jpg" id="3_txfug"]
 [ext_resource type="PackedScene" uid="uid://r8rcxext40h0" path="res://hud.tscn" id="4_vwp7e"]
-[ext_resource type="Material" uid="uid://brcs8frtxj18y" path="res://particles/originSink.tres" id="5_p1gio"]
-[ext_resource type="Texture2D" uid="uid://ba5e1p7knucu2" path="res://textures/blue_crosshair.png" id="6_uea6b"]
-[ext_resource type="Script" path="res://Crosshair.cs" id="7_8nvuc"]
-
-[sub_resource type="Curve" id="Curve_von6a"]
-_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.503513, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
-point_count = 3
-
-[sub_resource type="CurveTexture" id="CurveTexture_072eh"]
-curve = SubResource("Curve_von6a")
-
-[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_eqqu4"]
-particle_flag_disable_z = true
-spread = 180.0
-orbit_velocity_min = -1.0
-orbit_velocity_max = 1.0
-radial_velocity_min = 3.0
-radial_velocity_max = 3.0
-gravity = Vector3(0, 0, 0)
-scale_min = 0.5
-scale_max = 2.0
-color = Color(1, 0, 0, 0.498039)
-alpha_curve = SubResource("CurveTexture_072eh")
-
-[sub_resource type="Curve" id="Curve_bc246"]
-_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.501171, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
-point_count = 3
-
-[sub_resource type="CurveTexture" id="CurveTexture_tpxnl"]
-curve = SubResource("Curve_bc246")
-
-[sub_resource type="Curve" id="Curve_pvi6v"]
-min_value = -1.0
-_data = [Vector2(0, 1), 0.0, -3.33333, 0, 1, Vector2(0.3, 1.49012e-08), -3.33333, 0.0, 1, 1, Vector2(0.7, 1.49012e-08), 0.0, -3.33333, 1, 1, Vector2(1, -1), -3.33333, 0.0, 1, 0]
-point_count = 4
-metadata/_snap_enabled = true
-
-[sub_resource type="CurveTexture" id="CurveTexture_476t0"]
-curve = SubResource("Curve_pvi6v")
-
-[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_8tf2f"]
-lifetime_randomness = 0.5
-particle_flag_disable_z = true
-orbit_velocity_min = 0.5
-orbit_velocity_max = 1.0
-radial_velocity_min = 10.0
-radial_velocity_max = 15.0
-radial_velocity_curve = SubResource("CurveTexture_476t0")
-gravity = Vector3(0, 0, 0)
-color = Color(0, 1, 1, 1)
-alpha_curve = SubResource("CurveTexture_tpxnl")
-
-[sub_resource type="Gradient" id="Gradient_yctk7"]
-offsets = PackedFloat32Array(0, 0.1, 0.9, 1)
-colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
-metadata/_snap_enabled = true
 
 [node name="Main" type="Node"]
 script = ExtResource("1_anyro")
@@ -79,37 +23,6 @@ limit_left = 0
 limit_top = 0
 limit_right = 1080
 limit_bottom = 540
-
-[node name="OriginMarker" type="Node2D" parent="."]
-
-[node name="OriginParticlesB" type="GPUParticles2D" parent="OriginMarker"]
-visible = false
-amount = 20
-process_material = ExtResource("5_p1gio")
-lifetime = 0.6
-
-[node name="OriginParticlesA" type="GPUParticles2D" parent="OriginMarker"]
-visible = false
-amount = 127
-process_material = SubResource("ParticleProcessMaterial_eqqu4")
-lifetime = 2.0
-
-[node name="OriginParticlesC" type="GPUParticles2D" parent="OriginMarker"]
-amount = 50
-process_material = SubResource("ParticleProcessMaterial_8tf2f")
-lifetime = 10.0
-trail_lifetime = 0.2
-trail_sections = 80
-
-[node name="Crosshair" type="Sprite2D" parent="OriginMarker"]
-texture_filter = 1
-texture = ExtResource("6_uea6b")
-script = ExtResource("7_8nvuc")
-
-[node name="FlightPath" type="Line2D" parent="."]
-width = 2.0
-gradient = SubResource("Gradient_yctk7")
-begin_cap_mode = 2
 
 [connection signal="StartSimulation" from="HUD" to="." method="StartSimulation"]
 [connection signal="UpdateSpeed" from="HUD" to="." method="UpdateSimulationSpeed"]
