@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://chy61f20xgwvj"]
+[gd_scene load_steps=17 format=3 uid="uid://chy61f20xgwvj"]
 
 [ext_resource type="Script" path="res://Main.cs" id="1_anyro"]
 [ext_resource type="PackedScene" uid="uid://ctw0lq6v6yllf" path="res://air_mass.tscn" id="2_6etq6"]
@@ -56,6 +56,11 @@ gravity = Vector3(0, 0, 0)
 color = Color(0, 1, 1, 1)
 alpha_curve = SubResource("CurveTexture_tpxnl")
 
+[sub_resource type="Gradient" id="Gradient_yctk7"]
+offsets = PackedFloat32Array(0, 0.1, 0.9, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
+metadata/_snap_enabled = true
+
 [node name="Main" type="Node"]
 script = ExtResource("1_anyro")
 AirMassScene = ExtResource("2_6etq6")
@@ -100,6 +105,11 @@ trail_sections = 80
 texture_filter = 1
 texture = ExtResource("6_uea6b")
 script = ExtResource("7_8nvuc")
+
+[node name="FlightPath" type="Line2D" parent="."]
+width = 2.0
+gradient = SubResource("Gradient_yctk7")
+begin_cap_mode = 2
 
 [connection signal="StartSimulation" from="HUD" to="." method="StartSimulation"]
 [connection signal="UpdateSpeed" from="HUD" to="." method="UpdateSimulationSpeed"]

@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoDots", "GoDots.csproj", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DroxtalWolf", "..\..\LGTracer\DroxtalWolf\DroxtalWolf.csproj", "{56D01226-8FD2-40F8-8B80-7AF6A1920A0C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtmosTools", "..\..\LGTracer\AtmosTools\AtmosTools.csproj", "{BDDFDC0A-6CDB-49E2-B1E3-9B9C811BFC7F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 	Debug|Any CPU = Debug|Any CPU
@@ -23,5 +25,11 @@ Global
 		{56D01226-8FD2-40F8-8B80-7AF6A1920A0C}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
 		{56D01226-8FD2-40F8-8B80-7AF6A1920A0C}.ExportRelease|Any CPU.ActiveCfg = Debug|Any CPU
 		{56D01226-8FD2-40F8-8B80-7AF6A1920A0C}.ExportRelease|Any CPU.Build.0 = Debug|Any CPU
+		{BDDFDC0A-6CDB-49E2-B1E3-9B9C811BFC7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDDFDC0A-6CDB-49E2-B1E3-9B9C811BFC7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDDFDC0A-6CDB-49E2-B1E3-9B9C811BFC7F}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDDFDC0A-6CDB-49E2-B1E3-9B9C811BFC7F}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{BDDFDC0A-6CDB-49E2-B1E3-9B9C811BFC7F}.ExportRelease|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDDFDC0A-6CDB-49E2-B1E3-9B9C811BFC7F}.ExportRelease|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 EndGlobal

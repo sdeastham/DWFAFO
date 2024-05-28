@@ -1,3 +1,4 @@
+using System;
 using Godot;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,8 @@ public partial class Main : Node
 	private Vector2 GlobalEarthUpperLeft, GlobalEarthLowerRight;
 	private Vector2 _flightOrigin, _flightDestination;
 	private bool _originSelected;
+	private Vector2 _originLonLat;
+	private const int FlightPathPointCount = 150;
 
 	private bool _idle;
 	
@@ -49,13 +52,17 @@ public partial class Main : Node
 		//ShowRegion(-180.0f, 0.0f, 0.0f, 90.0f);
 		ShowRegion(0.0f, 180.0f, -90.0f, 0.0f);
 		// Standard global view
-		//ShowRegion(-180f, 180f, -90f, 90f);
+		ShowRegion(-180f, 180f, -90f, 90f);
+		/*
 		RandomNumberGenerator random = new RandomNumberGenerator();
 		random.Randomize();
 		// Use a zoom of 2 and pick somewhere at random
 		float lonMid = random.Randf() * 180.0f - 90.0f;
 		float latMid = random.Randf() * 90.0f - 45.0f;
 		ShowRegion(lonMid - 90.0f, lonMid + 90.0f, latMid - 45.0f, latMid + 45.0f);
+		*/
+		Line2D flightPath = GetNode<Line2D>("FlightPath");
+		flightPath.Hide();
 	}
 
 	public void ShowRegion(float lonWest, float lonEast, float latSouth, float latNorth, bool allowBlank=false)
@@ -218,6 +225,34 @@ public partial class Main : Node
 		
 		//double framerate = Engine.GetFramesPerSecond();  
 		//GD.Print($"Frame rate: {framerate,10:f2}; point count: {_pointDict.Count}");
+		
+		if (_originSelected)
+		{
+			DrawFlightPath();
+		}
+	}
+
+	private void DrawFlightPath()
+	{
+		// Draw line from origin marker to mouse
+		Vector2 newLoc = GetNode<Camera2D>("Camera").GetGlobalMousePosition();
+		bool outOfWindow = newLoc.X < 0 || newLoc.Y < 0 || newLoc.X > GlobalEarthLowerRight[0] ||
+		                   newLoc.Y > GlobalEarthLowerRight[1];
+		if (outOfWindow) { return; }
+		(float lonMouse, float latMouse) = XYToLonLat(newLoc.X, newLoc.Y);
+		Line2D flightPath = GetNode<Line2D>("FlightPath");
+		(double[] lons, double[] lats, _) = AtmosTools.Geodesy.GreatCircleWaypointsByCount(_originLonLat.X, _originLonLat.Y, 
+			lonMouse, latMouse, FlightPathPointCount);
+		for (int i = 1; i < (FlightPathPointCount-1); i++)
+		{
+			Vector2 tempLoc = LonLatToXYVector((float)lons[i], (float)lats[i]);
+			if (Math.Abs(lons[i] - lons[i - 1]) > 50.0)
+			{
+				tempLoc = new Vector2(Single.NaN, Single.NaN);
+			}
+			flightPath.SetPointPosition(i, flightPath.GetGlobalTransform().AffineInverse() * tempLoc);
+		}
+		flightPath.SetPointPosition(FlightPathPointCount-1,flightPath.GetGlobalTransform().AffineInverse() * newLoc);
 	}
 	
 	public void CreateAirMass(float longitude, float latitude, ulong uid)
@@ -273,47 +308,72 @@ public partial class Main : Node
 	
 	public override void _Input(InputEvent @event)
 	{
-		// Place a new air mass wherever we click
+		// Place a new air mass wherever we click and hold control
 		if (@event is InputEventMouseButton eventMouseButton && @event.IsPressed()
-			&& eventMouseButton.ButtonIndex == MouseButton.Left)
+			&& eventMouseButton.ButtonIndex == MouseButton.Left && Input.IsActionPressed("AllowPoint"))
 		{
 			// mouseLoc is in the coordinates of... no idea, actually
 			//Vector2 mouseLoc = eventMouseButton.Position;
 			// Cheating and just asking the camera where the mouse is
 			Vector2 newLoc = GetNode<Camera2D>("Camera").GetGlobalMousePosition();
 			// For an idle simulation, this is straightforward
+			/*
 			if (_idle)
 			{
 				(float lon, float lat) = XYToLonLat(newLoc.X, newLoc.Y);
 				((IdleSimulator)_simulator).CreateInteractivePoint(lon, lat);
 				return;
 			}
+			*/
 			// For a full simulation, was this the first or second click?
 			if (!_originSelected)
 			{
-				_flightOrigin = newLoc;
-				_originSelected = true;
-				Node2D originMarker = GetNode<Node2D>("OriginMarker");
-				originMarker.Position = newLoc;
-				// Before showing the particle manager, reset it - otherwise get some very weird effects
-				GpuParticles2D particles;
-				particles = originMarker.GetNode<GpuParticles2D>("OriginParticlesA");
-				particles.Restart();
-				particles = originMarker.GetNode<GpuParticles2D>("OriginParticlesB");
-				particles.Restart();
-				particles = originMarker.GetNode<GpuParticles2D>("OriginParticlesC");
-				particles.Restart();
-				// Show the node to which they are connected
-				originMarker.Show();
+				SetFlightOrigin(newLoc);
 			}
 			else
 			{
-				_flightDestination = newLoc;
-				_originSelected = false;
-				// Run flight!
-				Node2D originMarker = GetNode<Node2D>("OriginMarker");
-				originMarker.Hide();
+				SetFlightDestination(newLoc);
 			}
 		}
+	}
+	
+	private void SetFlightOrigin(Vector2 xyLoc)
+	{
+		if (_originSelected) { return; }
+		_flightOrigin = xyLoc;
+		_originSelected = true;
+		Node2D originMarker = GetNode<Node2D>("OriginMarker");
+		originMarker.Position = xyLoc;
+		(_originLonLat.X, _originLonLat.Y) = XYToLonLat(xyLoc.X, xyLoc.Y);
+		// Before showing the particle manager, reset it - otherwise get some very weird effects
+		GpuParticles2D particles;
+		particles = originMarker.GetNode<GpuParticles2D>("OriginParticlesA");
+		particles.Restart();
+		particles = originMarker.GetNode<GpuParticles2D>("OriginParticlesB");
+		particles.Restart();
+		particles = originMarker.GetNode<GpuParticles2D>("OriginParticlesC");
+		particles.Restart();
+		// Show the node to which they are connected
+		originMarker.Show();
+		Line2D flightPath = GetNode<Line2D>("FlightPath");
+		flightPath.ClearPoints();
+		for (int i = 0; i < FlightPathPointCount; i++)
+		{
+			flightPath.AddPoint(flightPath.GetGlobalTransform().AffineInverse() * originMarker.Position);
+		}
+		flightPath.Show();
+	}
+
+	private void SetFlightDestination(Vector2 xyLoc)
+	{
+		if (!_originSelected) { return; }
+		_flightDestination = xyLoc;
+		_originSelected = false;
+		// Run flight!
+		Node2D originMarker = GetNode<Node2D>("OriginMarker");
+		originMarker.Hide();
+		Line2D flightPath = GetNode<Line2D>("FlightPath");
+		flightPath.Hide();
+		flightPath.ClearPoints();
 	}
 }
