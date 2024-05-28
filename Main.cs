@@ -301,6 +301,8 @@ public partial class Main : Node
 				particles.Restart();
 				particles = originMarker.GetNode<GpuParticles2D>("OriginParticlesB");
 				particles.Restart();
+				particles = originMarker.GetNode<GpuParticles2D>("OriginParticlesC");
+				particles.Restart();
 				// Show the node to which they are connected
 				originMarker.Show();
 			}
