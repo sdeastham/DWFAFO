@@ -97,7 +97,7 @@ public class Simulator : ISimulator
         double[] pLimits   = [_configOptions.Domain.PressureBase * 100.0,
 	        _configOptions.Domain.PressureCeiling * 100.0];
         _meteorology = new MetManager(_configOptions.InputOutput.MetDirectory, lonLimits, latLimits, 
-	        _configOptions.Timing.StartDate,_configOptions.InputOutput.SerialMetData, Stopwatches, _configOptions.InputOutput.MetSource);
+	        _configOptions.Timing.StartDate, Stopwatches, _configOptions.InputOutput.MetSource);
         (double[] lonEdge, double[] latEdge) = _meteorology.GetXYMesh();
         _domain = new DomainManager(lonEdge, latEdge, pLimits, _pressureConstantsAp,
 	        _pressureConstantsBp, _meteorology, Stopwatches, boxHeightsNeeded, fixedPressures);
