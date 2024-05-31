@@ -145,7 +145,6 @@ public class IdleSimulator : ISimulator
 		for (int i = 0; i < nPoints; i++)
 		{
 			_pointQueue.AddLast((currTime, new Vector2((float)lons[i], (float)lats[i])));
-			GD.Print(currTime, lons[i], lats[i]);
 			currTime += timeStep;
 		}
 	}
