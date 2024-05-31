@@ -25,6 +25,7 @@ public class Simulator : ISimulator
 	private ulong StoredTimePoints;
 
 	private Dictionary<ulong, Dot> _oldPoints, _newPoints;
+	private PointManagerFlight? _flightManager;
 	
 	public Simulator()
 	{
@@ -45,6 +46,8 @@ public class Simulator : ISimulator
 		_oldPoints = [];
 		// Points at the end of the physics time step
 		_newPoints = [];
+		// May not get one
+		_flightManager = null;
 	}
 	
 	public async Task Initialize(string configFile)
@@ -254,12 +257,24 @@ public class Simulator : ISimulator
                 
             // Add to the list of _all_ point managers
             _pointManagers.Add(pointManager);
+            
+            // Store for later reference
+            _flightManager = pointManager;
         }
         
         if (_pointManagers.Count == 0)
         {
             throw new ArgumentException("No point managers enabled.");
         }
+	}
+
+	public void FlyFlight(float startLon, float startLat, float endLon, float endLat)
+	{
+		_flightManager?.SimulateFlight((double)startLon, (double)startLat,
+			(double)endLon, (double)endLat, GetCurrentTime(), 230.0 * 3.6);
+		//(double originLon, double originLat, double destinationLon, double destinationLat,
+		//	DateTime takeoffTime, double cruiseSpeedKPH, string? flightLabel = null, double pointPeriod = 60.0 * 5.0,
+		//IAircraft? equipment = null)
 	}
 
 	private class TimeManager

@@ -131,10 +131,11 @@ public class IdleSimulator : ISimulator
 		_nextUniqueIdentifier++;
 	}
 
-	public void FlyFlight(float startLon, float startLat, float endLon, float endLat, double flightSpeed = 230.0)
+	public void FlyFlight(float startLon, float startLat, float endLon, float endLat)
 	{
 		// One waypoint per 100 km
 		// Flight speed in m/s
+		double flightSpeed = 230.0;
 		double segmentLength = 100.0e3; // m
 		(double[] lons, double[] lats, _) = AtmosTools.Geodesy.GreatCircleWaypointsByLength(startLon,startLat,endLon,endLat,segmentLength*1.0e-3);
 		int nPoints = lons.Length;

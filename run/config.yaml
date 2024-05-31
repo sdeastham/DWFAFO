@@ -16,18 +16,18 @@ points-dense:
   initial: 1500
   # Calculate delta T due to pressure change?
   adiabatic-compression: true
-  kg-per-point: 2.0e14
+  kg-per-point: 8.0e14
   output-filename: dense-points-{date}.nc
   output-variables: [ "temperature",
 					  "relative_humidity_ice",
 					  "relative_humidity_liquid",
 					  "specific_humidity"]
 points-flights:
-  schedule-filename: "schedule_large_ranged.csv"
+  schedule-filename: null
   airports-filename: "airports_large.csv"
   segments-filename: null
   use-icao: true
-  max: 0
+  max: null
   adiabatic-compression: true
   output-filename: flight-waypoints-{date}.nc
   output-variables: ["segment_length",

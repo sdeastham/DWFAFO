@@ -338,13 +338,10 @@ public partial class Main : Node
 			else
 			{
 				SetFlightDestination(newLoc);
-				if (_idle)
-				{
-					(float lon, float lat) = XYToLonLat(newLoc.X, newLoc.Y);
-					//((IdleSimulator)_simulator).CreateInteractivePoint(_originLonLat.X, _originLonLat.Y);
-					//((IdleSimulator)_simulator).CreateInteractivePoint(lon, lat);
-					((IdleSimulator)_simulator).FlyFlight(_originLonLat.X, _originLonLat.Y, lon, lat);
-				}
+				(float lon, float lat) = XYToLonLat(newLoc.X, newLoc.Y);
+				//((IdleSimulator)_simulator).CreateInteractivePoint(_originLonLat.X, _originLonLat.Y);
+				//((IdleSimulator)_simulator).CreateInteractivePoint(lon, lat);
+				_simulator.FlyFlight(_originLonLat.X, _originLonLat.Y, lon, lat);
 			}
 		}
 	}
