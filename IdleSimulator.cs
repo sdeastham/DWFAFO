@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using DroxtalWolf;
 using Godot;
 
 namespace GoDots;
@@ -10,6 +11,7 @@ public class IdleSimulator : ISimulator
 	private readonly RandomNumberGenerator _random;
 	private ulong _nextUniqueIdentifier;
 	private DateTime CurrentTime;
+	private LinkedList<(DateTime, Vector2)> _pointQueue;
 
 	public IdleSimulator()
 	{
@@ -18,6 +20,7 @@ public class IdleSimulator : ISimulator
 		_nextUniqueIdentifier = 1;
 		_pointList = new LinkedList<Dot>();
 		CurrentTime = DateTime.Now;
+		_pointQueue = [];
 	}
 
 	public void ClearList()
@@ -27,6 +30,20 @@ public class IdleSimulator : ISimulator
 	
 	public void Advance(double timeStep)
 	{
+		// Add any points which were in the point queue
+		LinkedListNode<(DateTime, Vector2)>? nextPtNode = null;
+		LinkedListNode<(DateTime, Vector2)>? ptNode = _pointQueue.First;
+		while (ptNode != null)
+		{
+			nextPtNode = ptNode.Next;
+			if (ptNode.Value.Item1 < CurrentTime)
+			{
+				Vector2 spawnLoc = ptNode.Value.Item2;
+				AddPoint(spawnLoc.X, spawnLoc.Y);
+				_pointQueue.Remove(ptNode);
+			}
+			ptNode = nextPtNode;
+		}
 		// Rate of new point creation, in points per hour
 		double newPointRate = 1.0 / 3600.0;
 		// Rate of point destruction, in points per hour
@@ -112,5 +129,23 @@ public class IdleSimulator : ISimulator
 		double maxLifetime = 3600.0 * (24.0 * _random.Randf() + 1.0);
 		_pointList.AddLast(new Dot(lon,lat,_nextUniqueIdentifier,maxLifetime));
 		_nextUniqueIdentifier++;
+	}
+
+	public void FlyFlight(float startLon, float startLat, float endLon, float endLat, double flightSpeed = 230.0)
+	{
+		// One waypoint per 100 km
+		// Flight speed in m/s
+		double segmentLength = 100.0e3; // m
+		(double[] lons, double[] lats, _) = AtmosTools.Geodesy.GreatCircleWaypointsByLength(startLon,startLat,endLon,endLat,segmentLength*1.0e-3);
+		int nPoints = lons.Length;
+		
+		DateTime currTime = CurrentTime;
+		TimeSpan timeStep = TimeSpan.FromSeconds((int)(segmentLength / flightSpeed));
+		for (int i = 0; i < nPoints; i++)
+		{
+			_pointQueue.AddLast((currTime, new Vector2((float)lons[i], (float)lats[i])));
+			GD.Print(currTime, lons[i], lats[i]);
+			currTime += timeStep;
+		}
 	}
 }
