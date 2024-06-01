@@ -26,6 +26,7 @@ public class Simulator : ISimulator
 
 	private Dictionary<ulong, Dot> _oldPoints, _newPoints;
 	private PointManagerFlight? _flightManager;
+	private PointManagerDense? _denseManager;
 	
 	public Simulator()
 	{
@@ -48,6 +49,7 @@ public class Simulator : ISimulator
 		_newPoints = [];
 		// May not get one
 		_flightManager = null;
+		_denseManager = null;
 	}
 	
 	public async Task Initialize(string configFile)
@@ -224,13 +226,16 @@ public class Simulator : ISimulator
             Random pointMgrRandomNumberGenerator = DroxtalWolf.Simulator.GetNextRandomNumberGenerator(_masterRandomNumberGenerator, _seedsUsed);
 
             // The point manager holds all the actual point data and controls velocity calculations (in deg/s)
-            PointManager pointManager = new PointManagerDense(_domain, _configOptions, _configOptions.PointsDense, pointMgrRandomNumberGenerator);
+            PointManagerDense pointManager = new PointManagerDense(_domain, _configOptions, _configOptions.PointsDense, pointMgrRandomNumberGenerator);
 
             // Scatter N points randomly over the domain
             (double[] xInitial, double[] yInitial, double[] pInitial) =
                 _domain.MapRandomToXYP(_configOptions.PointsDense.Initial, pointMgrRandomNumberGenerator);
             pointManager.CreatePointSet(xInitial, yInitial, pInitial);
-
+            
+            // Store for later reference
+            _denseManager = pointManager;
+            
             // Add to the list of _all_ point managers
             _pointManagers.Add(pointManager);
         }
@@ -281,7 +286,6 @@ public class Simulator : ISimulator
 		//(double originLon, double originLat, double destinationLon, double destinationLat,
 		//	DateTime takeoffTime, double cruiseSpeedKPH, string? flightLabel = null, double pointPeriod = 60.0 * 5.0,
 		//IAircraft? equipment = null)
-		GD.Print($"Flight addition status: {success}");
 	}
 
 	private class TimeManager

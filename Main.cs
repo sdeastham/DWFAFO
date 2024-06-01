@@ -21,6 +21,8 @@ public partial class Main : Node
 	private bool _originSelected;
 	private Vector2 _originLonLat;
 	private const int FlightPathPointCount = 150;
+	private double _airMassLifetime;
+	private double _airMassFrequency;
 
 	private bool _idle;
 	
@@ -36,6 +38,8 @@ public partial class Main : Node
 		_originSelected = false;
 		
 		_simulationSpeed = 1.0; // Simulation hours per wall-clock second
+		_airMassLifetime = 2.0;
+		_airMassFrequency = 10.0;
 		_idle = true;
 		_pointDict = [];
 		StartIdleSimulation();
@@ -128,6 +132,7 @@ public partial class Main : Node
 		// Show and update the speed slider (display is in minutes/second)
 		var slider = hud.GetNode<VSlider>("SpeedSlider");
 		slider.Value = _simulationSpeed * 60.0;
+		UpdateSimulationSpeed((float)slider.Value);
 		slider.Show();
 	}
 
@@ -145,6 +150,8 @@ public partial class Main : Node
 		{
 			airMass.UpdateLifetime(newLifetime, newFrequency);
 		}
+		_airMassLifetime = newLifetime;
+		_airMassFrequency = newFrequency;
 	}
 	
 	private void StopIdleSimulation()
@@ -267,8 +274,8 @@ public partial class Main : Node
 		dot.SetUniqueIdentifier(uid);
 		//dot.UpdateColor(Color.Color8(255,0,0,127));
 		dot.UpdateColor(Color.Color8(255,255,255,127));
-		dot.UpdateLifetime(2.0,10.0);
 		_pointDict[dot.UniqueIdentifier] = dot;
+		dot.UpdateLifetime(_airMassLifetime, _airMassFrequency);
 		AddChild(dot);
 	}
 
@@ -346,12 +353,7 @@ public partial class Main : Node
 		originMarker.Position = xyLoc;
 		(_originLonLat.X, _originLonLat.Y) = XYToLonLat(xyLoc.X, xyLoc.Y);
 		// Before showing the particle manager, reset it - otherwise get some very weird effects
-		GpuParticles2D particles;
-		particles = originMarker.GetNode<GpuParticles2D>("OriginParticlesA");
-		particles.Restart();
-		particles = originMarker.GetNode<GpuParticles2D>("OriginParticlesB");
-		particles.Restart();
-		particles = originMarker.GetNode<GpuParticles2D>("OriginParticlesC");
+		GpuParticles2D particles = originMarker.GetNode<GpuParticles2D>("Swirl");
 		particles.Restart();
 		// Show the node to which they are connected
 		originMarker.Show();
