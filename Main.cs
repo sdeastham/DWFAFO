@@ -321,16 +321,9 @@ public partial class Main : Node
 			//Vector2 mouseLoc = eventMouseButton.Position;
 			// Cheating and just asking the camera where the mouse is
 			Vector2 newLoc = GetNode<Camera2D>("Camera").GetGlobalMousePosition();
-			// For an idle simulation, this is straightforward
-			/*
-			if (_idle)
-			{
-				(float lon, float lat) = XYToLonLat(newLoc.X, newLoc.Y);
-				((IdleSimulator)_simulator).CreateInteractivePoint(lon, lat);
-				return;
-			}
-			*/
-			// For a full simulation, was this the first or second click?
+			// Let the user simulate a flight
+			// First click: set origin
+			// Second click: set destination
 			if (!_originSelected)
 			{
 				SetFlightOrigin(newLoc);
@@ -339,8 +332,6 @@ public partial class Main : Node
 			{
 				SetFlightDestination(newLoc);
 				(float lon, float lat) = XYToLonLat(newLoc.X, newLoc.Y);
-				//((IdleSimulator)_simulator).CreateInteractivePoint(_originLonLat.X, _originLonLat.Y);
-				//((IdleSimulator)_simulator).CreateInteractivePoint(lon, lat);
 				_simulator.FlyFlight(_originLonLat.X, _originLonLat.Y, lon, lat);
 			}
 		}

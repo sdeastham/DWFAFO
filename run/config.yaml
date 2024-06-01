@@ -16,7 +16,7 @@ points-dense:
   initial: 1500
   # Calculate delta T due to pressure change?
   adiabatic-compression: true
-  kg-per-point: 8.0e14
+  kg-per-point: 8.0e15
   output-filename: dense-points-{date}.nc
   output-variables: [ "temperature",
 					  "relative_humidity_ice",
@@ -61,8 +61,8 @@ domain:
   west-limit: 15.0
   south-limit: 10.0
   north-limit: 60.0
-  pressure-base: 850.0
-  pressure-ceiling: 200.0
+  pressure-base: 400.0
+  pressure-ceiling: 100.0
 input-output:
   # Met source must be MERRA-2 or ERA5
   met-source: "MERRA-2"

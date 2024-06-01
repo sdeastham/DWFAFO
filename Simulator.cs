@@ -129,15 +129,21 @@ public class Simulator : ISimulator
 		}
 
 		_newPoints.Clear();
+		
+		// Add an offset so that all the points from one manager are handled uniquely
+		// Currently assuming (!!) that there will never be more than 1e6 points per manager
+		int iManager = 0;
 		foreach (PointManager pm in _pointManagers)
 		{
+			ulong uidOffset = 1000000 * (ulong)iManager;
 			foreach (IAdvected advPoint in pm.ActivePoints)
 			{
 				(double x, double y, double p) = advPoint.GetLocation();
 				ulong uid = advPoint.GetUID();
-				Dot point = new Dot((float)x, (float)y, uid, 1.0);
-				_newPoints.Add(uid, point);
+				Dot point = new Dot((float)x, (float)y, uid + uidOffset, 1.0);
+				_newPoints.Add(uid+uidOffset, point);
 			}
+			iManager++;
 		}
 	}
 	
@@ -270,11 +276,12 @@ public class Simulator : ISimulator
 
 	public void FlyFlight(float startLon, float startLat, float endLon, float endLat)
 	{
-		_flightManager?.SimulateFlight((double)startLon, (double)startLat,
+		bool? success = _flightManager?.SimulateFlight((double)startLon, (double)startLat,
 			(double)endLon, (double)endLat, GetCurrentTime(), 230.0 * 3.6);
 		//(double originLon, double originLat, double destinationLon, double destinationLat,
 		//	DateTime takeoffTime, double cruiseSpeedKPH, string? flightLabel = null, double pointPeriod = 60.0 * 5.0,
 		//IAircraft? equipment = null)
+		GD.Print($"Flight addition status: {success}");
 	}
 
 	private class TimeManager
