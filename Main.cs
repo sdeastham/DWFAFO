@@ -179,7 +179,7 @@ public partial class Main : Node
 		IEnumerable<Dot> points = _simulator.GetPointData();
 		foreach (Dot point in points)
 		{
-			CreateAirMass(point.X,point.Y,point.UniqueIdentifier);
+			CreateAirMass(point);
 		}
 	}
 
@@ -223,7 +223,7 @@ public partial class Main : Node
 			}
 			else
 			{
-				CreateAirMass(point.X, point.Y, point.UniqueIdentifier);
+				CreateAirMass(point);
 			}
 		}
 		
@@ -266,17 +266,23 @@ public partial class Main : Node
 		}
 		flightPath.SetPointPosition(FlightPathPointCount-1,flightPath.GetGlobalTransform().AffineInverse() * newLoc);
 	}
-	
-	public void CreateAirMass(float longitude, float latitude, ulong uid)
+
+	private void CreateAirMass(Dot point)
 	{
 		AirMass dot = AirMassScene.Instantiate<AirMass>();
-		dot.SetProperties(longitude,latitude);
-		dot.SetUniqueIdentifier(uid);
+		dot.SetProperties(point.X,point.Y);
+		dot.SetUniqueIdentifier(point.UniqueIdentifier);
 		//dot.UpdateColor(Color.Color8(255,0,0,127));
-		dot.UpdateColor(Color.Color8(255,255,255,127));
+		dot.UpdateColor(point.DotColor);
+		dot.UpdateSize(point.DotSizeMultiplier);
 		_pointDict[dot.UniqueIdentifier] = dot;
 		dot.UpdateLifetime(_airMassLifetime, _airMassFrequency);
 		AddChild(dot);
+	}
+	
+	public void CreateAirMass(float longitude, float latitude, ulong uid)
+	{
+		CreateAirMass(new Dot(longitude, latitude, uid, 1.0));
 	}
 
 	private void DeleteAirMass(ulong uid)

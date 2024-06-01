@@ -21,11 +21,13 @@ public partial class AirMass : Node2D
 	{
 		UniqueIdentifier = uid;
 	}
-	
+
+	/*
 	public override void _Draw()
 	{
 		DrawRect(new Rect2(-0.5f, -0.5f, 1.0f, 1.0f), Colors.WhiteSmoke);
 	}
+	*/
 
 	private void OnVisibleOnScreenNotifier2DScreenExited()
 	{
@@ -71,5 +73,13 @@ public partial class AirMass : Node2D
 		GpuParticles2D particleGen = GetNode<GpuParticles2D>("ParticleSpawner");
 		particleGen.Set("lifetime",(float)lifetime);
 		particleGen.Set("amount",cap);
+	}
+
+	public void UpdateSize(double sizeMultiplier)
+	{
+		GpuParticles2D particleGen = GetNode<GpuParticles2D>("ParticleSpawner");
+		double newSize = sizeMultiplier * (double)particleGen.Get("scale_min");
+		particleGen.Set("scale_min",(float)newSize);
+		particleGen.Set("scale_max",(float)newSize);
 	}
 }
