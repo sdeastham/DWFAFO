@@ -141,13 +141,13 @@ public class Simulator : ISimulator
 			Color pmColor;
 			if (pm == _denseManager)
 			{
-				pmColor = Color.Color8(255, 255, 255, 31);
-				pmSize = 0.05;
+				pmColor = Color.Color8(255, 255, 255, 15);
+				pmSize = 0.02;
 			}
 			else
 			{
-				pmColor = Color.Color8(18, 231, 255, 63);
-				pmSize = 0.2;
+				pmColor = Color.Color8(18, 231, 255, 31);
+				pmSize = 0.05;
 			}
 			ulong uidOffset = 1000000 * (ulong)iManager;
 			foreach (IAdvected advPoint in pm.ActivePoints)
@@ -155,7 +155,7 @@ public class Simulator : ISimulator
 				(double x, double y, double p) = advPoint.GetLocation();
 				ulong uid = advPoint.GetUID();
 				Dot point = new Dot((float)x, (float)y, uid + uidOffset, 1.0,
-					dotColor: pmColor,dotSizeMultiplier: pmSize);
+					dotColor: pmColor,dotSize: pmSize);
 				_newPoints.Add(uid+uidOffset, point);
 			}
 			iManager++;
@@ -220,7 +220,7 @@ public class Simulator : ISimulator
 			float x = (float)(stepFraction * (newX - oldX)) + oldX;
 			float y = (float)(stepFraction * (newY - oldY)) + oldY;
 			Dot tempPoint = new Dot(x, y, point.UniqueIdentifier, point.MaxLifetime,
-				point.DotSizeMultiplier, point.DotColor, point.LifetimeMultiplier);
+				point.DotSize, point.DotColor, point.LifetimeMultiplier);
 			tempPoint.Age = point.Age;
 			interpPoints.Add(tempPoint);
 		}

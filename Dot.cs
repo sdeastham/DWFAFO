@@ -7,7 +7,7 @@ public class Dot(
 	float y,
 	ulong uniqueIdentifier,
 	double maxLifetime,
-	double dotSizeMultiplier = 1.0,
+	double dotSize = 1.0,
 	Color? dotColor = null,
 	double lifetimeMultiplier = 1.0)
 {
@@ -33,5 +33,5 @@ public class Dot(
 	public double MaxLifetime = maxLifetime;
 	public double LifetimeMultiplier = lifetimeMultiplier;
 	public Color DotColor = dotColor ?? Color.Color8(255, 255, 255, 255);
-	public double DotSizeMultiplier = dotSizeMultiplier;
+	public double DotSize = dotSize;
 }

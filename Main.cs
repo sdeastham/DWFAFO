@@ -39,7 +39,7 @@ public partial class Main : Node
 		
 		_simulationSpeed = 1.0; // Simulation hours per wall-clock second
 		_airMassLifetime = 2.0;
-		_airMassFrequency = 10.0;
+		_airMassFrequency = 20.0;
 		_idle = true;
 		_pointDict = [];
 		StartIdleSimulation();
@@ -269,21 +269,21 @@ public partial class Main : Node
 		flightPath.SetPointPosition(FlightPathPointCount-1,flightPath.GetGlobalTransform().AffineInverse() * newLoc);
 	}
 
-	private void CreateAirMass(Dot point)
+	private void CreateAirMass(Dot dot)
 	{
-		AirMass dot = AirMassScene.Instantiate<AirMass>();
-		dot.SetProperties(point.X,point.Y);
-		dot.SetUniqueIdentifier(point.UniqueIdentifier);
+		AirMass newAirMass = AirMassScene.Instantiate<AirMass>();
+		newAirMass.SetProperties(dot.X,dot.Y);
+		newAirMass.SetUniqueIdentifier(dot.UniqueIdentifier);
 		//dot.UpdateColor(Color.Color8(255,0,0,127));
-		dot.UpdateColor(point.DotColor);
-		dot.UpdateSize(point.DotSizeMultiplier);
-		_pointDict[dot.UniqueIdentifier] = dot;
-		dot.UpdateLifetime(_airMassLifetime, _airMassFrequency);
+		newAirMass.UpdateColor(dot.DotColor);
+		newAirMass.UpdateSize(dot.DotSize);
+		_pointDict[newAirMass.UniqueIdentifier] = newAirMass;
+		newAirMass.UpdateLifetime(_airMassLifetime, _airMassFrequency);
 		// Start the dot off hidden
-		dot.Hide();
-		AddChild(dot);
+		newAirMass.Hide();
+		AddChild(newAirMass);
 		// Signal handling
-		dot.FinalizeAirMass += FreeAirMass;
+		newAirMass.FinalizeAirMass += FreeAirMass;
 	}
 	
 	public void CreateAirMass(float longitude, float latitude, ulong uid)

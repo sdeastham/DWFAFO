@@ -86,13 +86,14 @@ public partial class AirMass : Node2D
 		// Lifetime also affects the frequency of output - because the number of particles is capped
 		int cap = (int)Math.Round(frequency * lifetime);
 		_particleGen.Set("lifetime",(float)lifetime);
-		_particleGen.Set("amount",cap);
+		// Only change this if you want to reduce the pain to the GPU
+		//_particleGen.Set("amount",cap);
 	}
 
-	public void UpdateSize(double sizeMultiplier)
+	public void UpdateSize(double newSize)
 	{
-		double newSize = sizeMultiplier * (double)_particleGen.Get("scale_min");
-		_particleGen.Set("scale_min",(float)newSize);
-		_particleGen.Set("scale_max",(float)newSize);
+		// Scaling over time will be applied with this as the starting value
+		_particleGen.ProcessMaterial.Set("scale_min", newSize);
+		_particleGen.ProcessMaterial.Set("scale_max", newSize);
 	}
 }

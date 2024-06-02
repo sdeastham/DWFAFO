@@ -24,7 +24,7 @@ points-dense:
 					  "relative_humidity_liquid",
 					  "specific_humidity"]
 points-flights:
-  schedule-filename: null
+  schedule-filename: null #"schedule_large_ranged.csv"
   airports-filename: "airports_large.csv"
   segments-filename: null
   use-icao: true

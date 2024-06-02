@@ -148,7 +148,7 @@ public class IdleSimulator : ISimulator
 		// Lifetime of 1-24 hours for all points
 		//double maxLifetime = 3600.0 * (24.0 * _random.Randf() + 1.0);
 		//double maxLifetime = 3600.0 * (6.0 + _random.Randf() * _maxRandomLifetime); // 6 hour lifetime for all
-		_pointList.AddLast(new Dot(lon,lat,_nextUniqueIdentifier,lifetime));
+		_pointList.AddLast(new Dot(lon,lat,_nextUniqueIdentifier,lifetime, dotSize: 0.1));
 		_nextUniqueIdentifier++;
 	}
 
