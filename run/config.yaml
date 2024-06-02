@@ -12,11 +12,12 @@ timesteps:
   # Frequency data will be written to disk (hh:mm:ss)
   output: 24:00:00
 points-dense:
-  max: 10000
-  initial: 1500
+  max: null
+  initial: 1000
   # Calculate delta T due to pressure change?
   adiabatic-compression: true
-  kg-per-point: 8.0e15
+  first-order-integration: true
+  kg-per-point: 5.0e14
   output-filename: dense-points-{date}.nc
   output-variables: [ "temperature",
 					  "relative_humidity_ice",
@@ -29,6 +30,7 @@ points-flights:
   use-icao: true
   max: null
   adiabatic-compression: true
+  first-order-integration: true
   output-filename: flight-waypoints-{date}.nc
   output-variables: ["segment_length",
 					 "segment_stretch",
@@ -50,7 +52,7 @@ points-flights:
   contrail-simulation: true
   include-settling: true
   # Complex contrails incur more computational cost
-  complex-contrails: false
+  complex-contrails: true
   skip-newton-iteration-for-tlm: false
   use-ponater-tlc: true
   point-spacing: 300.0
@@ -71,10 +73,9 @@ input-output:
   #met-directory: "C:/Data/ERA5"
   output-directory: "C:/Data/LGTracer/output"
   input-directory: "C:/Data/LGTracer/input"
-  serial-met-data: false
 # Use null for the default (system clock)
 seed: 481301
 # Update meteorology over time?
-time-dependent-meteorology: true
+time-dependent-meteorology: false
 # More verbose output?
 verbose: true

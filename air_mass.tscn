@@ -1,6 +1,7 @@
-[gd_scene load_steps=7 format=3 uid="uid://ctw0lq6v6yllf"]
+[gd_scene load_steps=8 format=3 uid="uid://ctw0lq6v6yllf"]
 
 [ext_resource type="Script" path="res://AirMass.cs" id="1_vvny6"]
+[ext_resource type="Texture2D" uid="uid://cso35nthfvbhx" path="res://textures/circle.png" id="2_qsjln"]
 
 [sub_resource type="Curve" id="Curve_p36v0"]
 _data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
@@ -22,8 +23,8 @@ particle_flag_disable_z = true
 direction = Vector3(0, 0, 0)
 spread = 30.0
 gravity = Vector3(0, 0, 0)
-scale_min = 0.5
-scale_max = 0.5
+scale_min = 0.1
+scale_max = 0.1
 scale_curve = SubResource("CurveTexture_nqv5b")
 color = Color(1, 1, 1, 0.498039)
 alpha_curve = SubResource("CurveTexture_31lp6")
@@ -35,4 +36,7 @@ script = ExtResource("1_vvny6")
 
 [node name="ParticleSpawner" type="GPUParticles2D" parent="."]
 process_material = SubResource("ParticleProcessMaterial_8ibcl")
+texture = ExtResource("2_qsjln")
 lifetime = 5.0
+
+[connection signal="finished" from="ParticleSpawner" to="." method="Inhume"]

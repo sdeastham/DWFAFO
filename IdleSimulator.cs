@@ -11,7 +11,8 @@ public class IdleSimulator : ISimulator
 	private readonly RandomNumberGenerator _random;
 	private ulong _nextUniqueIdentifier;
 	private DateTime CurrentTime;
-	private LinkedList<(DateTime, Vector2)> _pointQueue;
+	private LinkedList<(DateTime, Vector2)> _pointQueueRandom;
+	private LinkedList<(DateTime, Vector2)> _pointQueueUser;
 
 	public IdleSimulator()
 	{
@@ -20,7 +21,8 @@ public class IdleSimulator : ISimulator
 		_nextUniqueIdentifier = 1;
 		_pointList = new LinkedList<Dot>();
 		CurrentTime = DateTime.Now;
-		_pointQueue = [];
+		_pointQueueRandom = [];
+		_pointQueueUser = [];
 	}
 
 	public void ClearList()
@@ -32,15 +34,32 @@ public class IdleSimulator : ISimulator
 	{
 		// Add any points which were in the point queue
 		LinkedListNode<(DateTime, Vector2)>? nextPtNode = null;
-		LinkedListNode<(DateTime, Vector2)>? ptNode = _pointQueue.First;
+		LinkedListNode<(DateTime, Vector2)>? ptNode = _pointQueueRandom.First;
+		while (ptNode != null)
+		{
+			nextPtNode = ptNode.Next;
+			if (ptNode.Value.Item1 < CurrentTime)
+			{
+				// Randomly-generated points get a lifetime between 1 and 24 hours
+				float randomLifetime = 3600.0f * (1.0f + 23.0f * _random.Randf());
+				Vector2 spawnLoc = ptNode.Value.Item2;
+				AddPoint(spawnLoc.X, spawnLoc.Y,randomLifetime);
+				_pointQueueRandom.Remove(ptNode);
+			}
+			ptNode = nextPtNode;
+		}
+		// Repeat for the user-added points
+		nextPtNode = null;
+		ptNode = _pointQueueUser.First;
 		while (ptNode != null)
 		{
 			nextPtNode = ptNode.Next;
 			if (ptNode.Value.Item1 < CurrentTime)
 			{
 				Vector2 spawnLoc = ptNode.Value.Item2;
-				AddPoint(spawnLoc.X, spawnLoc.Y);
-				_pointQueue.Remove(ptNode);
+				// User points get a fixed lifetime
+				AddPoint(spawnLoc.X, spawnLoc.Y,3600.0f*6.0f);
+				_pointQueueUser.Remove(ptNode);
 			}
 			ptNode = nextPtNode;
 		}
@@ -114,20 +133,22 @@ public class IdleSimulator : ISimulator
 		{
 			float lon = _random.Randf() * 360.0f - 180.0f;
 			float lat = _random.Randf() * 180.0f - 90.0f;
-			AddPoint(lon, lat);
+			float lifetime = 3600f * (1f + 23f * _random.Randf());
+			AddPoint(lon, lat, lifetime);
 		}
 	}
 
 	public void CreateInteractivePoint(float lon, float lat)
 	{
-		AddPoint(lon, lat);
+		AddPoint(lon, lat, 3600.0f*6.0f);
 	}
 	
-	private void AddPoint(float lon, float lat)
+	private void AddPoint(float lon, float lat, float lifetime)
 	{
 		// Lifetime of 1-24 hours for all points
-		double maxLifetime = 3600.0 * (24.0 * _random.Randf() + 1.0);
-		_pointList.AddLast(new Dot(lon,lat,_nextUniqueIdentifier,maxLifetime));
+		//double maxLifetime = 3600.0 * (24.0 * _random.Randf() + 1.0);
+		//double maxLifetime = 3600.0 * (6.0 + _random.Randf() * _maxRandomLifetime); // 6 hour lifetime for all
+		_pointList.AddLast(new Dot(lon,lat,_nextUniqueIdentifier,lifetime));
 		_nextUniqueIdentifier++;
 	}
 
@@ -144,7 +165,7 @@ public class IdleSimulator : ISimulator
 		TimeSpan timeStep = TimeSpan.FromSeconds((int)(segmentLength / flightSpeed));
 		for (int i = 0; i < nPoints; i++)
 		{
-			_pointQueue.AddLast((currTime, new Vector2((float)lons[i], (float)lats[i])));
+			_pointQueueUser.AddLast((currTime, new Vector2((float)lons[i], (float)lats[i])));
 			currTime += timeStep;
 		}
 	}

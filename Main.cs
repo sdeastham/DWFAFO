@@ -220,6 +220,8 @@ public partial class Main : Node
 				(float x, float y) = LonLatToXY(point.X, point.Y);
 				Vector2 transformedLocation = new Vector2(x, y);
 				airMass.UpdatePosition(transformedLocation);
+				// If dot was previously hidden, show it now
+				airMass.Show();
 			}
 			else
 			{
@@ -277,7 +279,11 @@ public partial class Main : Node
 		dot.UpdateSize(point.DotSizeMultiplier);
 		_pointDict[dot.UniqueIdentifier] = dot;
 		dot.UpdateLifetime(_airMassLifetime, _airMassFrequency);
+		// Start the dot off hidden
+		dot.Hide();
 		AddChild(dot);
+		// Signal handling
+		dot.FinalizeAirMass += FreeAirMass;
 	}
 	
 	public void CreateAirMass(float longitude, float latitude, ulong uid)
@@ -285,10 +291,19 @@ public partial class Main : Node
 		CreateAirMass(new Dot(longitude, latitude, uid, 1.0));
 	}
 
+	// This signals the airmass to stop spawning particles etc, but does not yet remove it from the dictionary
 	private void DeleteAirMass(ulong uid)
 	{
 		AirMass airMass = _pointDict[uid];
 		airMass.KillNode();
+	}
+
+	// This catches the signal from the air mass that there is nothing left on-screen
+	public void FreeAirMass(ulong uid)
+	{
+		// Disconnect signal
+		_pointDict[uid].FinalizeAirMass -= FreeAirMass;
+		// Free up the point
 		_pointDict.Remove(uid);
 	}
 	

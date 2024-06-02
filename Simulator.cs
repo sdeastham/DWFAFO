@@ -141,13 +141,13 @@ public class Simulator : ISimulator
 			Color pmColor;
 			if (pm == _denseManager)
 			{
-				pmColor = Color.Color8(255, 255, 255, 127);
-				pmSize = 0.3;
+				pmColor = Color.Color8(255, 255, 255, 31);
+				pmSize = 0.05;
 			}
 			else
 			{
-				pmColor = Color.Color8(18, 231, 255, 255);
-				pmSize = 1.0;
+				pmColor = Color.Color8(18, 231, 255, 63);
+				pmSize = 0.2;
 			}
 			ulong uidOffset = 1000000 * (ulong)iManager;
 			foreach (IAdvected advPoint in pm.ActivePoints)
@@ -209,20 +209,20 @@ public class Simulator : ISimulator
 		List<Dot> interpPoints = [];
 		foreach (Dot point in _oldPoints.Values)
 		{
-			if (_newPoints.ContainsKey(point.UniqueIdentifier))
-			{
-				Dot newPoint = _newPoints[point.UniqueIdentifier];
-				float oldX = point.X;
-				float oldY = point.Y;
-				float newX = newPoint.X;
-				float newY = newPoint.Y;
-				float x = (float)(stepFraction * (newX - oldX)) + oldX;
-				float y = (float)(stepFraction * (newY - oldY)) + oldY;
-				Dot tempPoint = new Dot(x, y, point.UniqueIdentifier, point.MaxLifetime,
-					point.DotSizeMultiplier, point.DotColor, point.LifetimeMultiplier);
-				tempPoint.Age = point.Age;
-				interpPoints.Add(tempPoint);
-			}
+			if (!_newPoints.ContainsKey(point.UniqueIdentifier)) continue;
+			// We've established that a point which was present in the previous calculation
+			// is also present now
+			Dot newPoint = _newPoints[point.UniqueIdentifier];
+			float oldX = point.X;
+			float oldY = point.Y;
+			float newX = newPoint.X;
+			float newY = newPoint.Y;
+			float x = (float)(stepFraction * (newX - oldX)) + oldX;
+			float y = (float)(stepFraction * (newY - oldY)) + oldY;
+			Dot tempPoint = new Dot(x, y, point.UniqueIdentifier, point.MaxLifetime,
+				point.DotSizeMultiplier, point.DotColor, point.LifetimeMultiplier);
+			tempPoint.Age = point.Age;
+			interpPoints.Add(tempPoint);
 		}
 		return interpPoints;
 	}
