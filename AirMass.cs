@@ -23,17 +23,34 @@ public partial class AirMass : Node2D
 		_segment = GetNode<Line2D>("Segment");
 		Previous = null;
 		Next = null;
+		_segment.AddPoint(new Vector2(0,0));
+		_segment.AddPoint(new Vector2(0,0));
 	}
 
-	public void SetPreviousAirMass(AirMass previous)
+	public void SetPreviousAirMass(AirMass? previous)
 	{
 		Previous = previous;
-		previous.Next = this;
+		if (previous != null)
+		{
+			previous.Next = this;
+		}
+	}
+	
+	public void SetNextAirMass(AirMass? next)
+	{
+		Next = next;
+		if (next != null)
+		{
+			next.Previous = this;
+		}
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
+		if (Previous == null) return;
+		Vector2 relVector = Previous.Position - Position;
+		_segment.SetPointPosition(1,relVector);
 	}
 	
 	public void SetUniqueIdentifier(ulong uid)
@@ -66,6 +83,8 @@ public partial class AirMass : Node2D
 	{
 		Live = false;
 		UniqueIdentifier = 0;
+		Next?.SetPreviousAirMass(null);
+		Previous?.SetNextAirMass(null);
 		// Tell Main to remove this point from its dictionary
 		EmitSignal(SignalName.FinalizeAirMass, UniqueIdentifier);
 		// Tell Godot this node can die

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DroxtalWolf;
+using Godot.Collections;
 using Environment = System.Environment;
 
 
@@ -15,7 +16,7 @@ public partial class Main : Node
 	public PackedScene AirMassScene {get;set;}
 	private ISimulator _simulator;
 	private double _simulationSpeed;
-	private Dictionary<ulong, AirMass> _pointDict;
+	private System.Collections.Generic.Dictionary<ulong, AirMass> _pointDict;
 	private Vector2 GlobalEarthUpperLeft, GlobalEarthLowerRight;
 	private Vector2 _flightOrigin, _flightDestination;
 	private bool _originSelected;
@@ -276,11 +277,30 @@ public partial class Main : Node
 		//dot.UpdateColor(Color.Color8(255,0,0,127));
 		newAirMass.UpdateColor(dot.DotColor);
 		newAirMass.UpdateSize(dot.DotSize);
+		// If we have a predecessor, let the air mass know
+		if (dot.Previous != null)
+		{
+			ulong targetIdentifier = dot.Previous.UniqueIdentifier;
+			Array<Node>? oldNodes = GetTree().GetNodesInGroup("AllPoints");
+			AirMass? previousAirMass = null;
+			foreach (AirMass airMass in oldNodes)
+			{
+				if (airMass.UniqueIdentifier == targetIdentifier)
+				{
+					previousAirMass = airMass;
+					break;
+				}
+			}
+			if (previousAirMass != null)
+			{
+				newAirMass.SetPreviousAirMass(previousAirMass);
+			}
+		}
 		_pointDict[newAirMass.UniqueIdentifier] = newAirMass;
 		newAirMass.UpdateLifetime(_airMassLifetime, _airMassFrequency);
 		// Start the dot off hidden
 		newAirMass.Hide();
-		AddChild(newAirMass);
+		AddChild(newAirMass); // Somehow.. this function is causing the Previous to get set to null?!
 		// Signal handling
 		newAirMass.FinalizeAirMass += FreeAirMass;
 	}
