@@ -43,4 +43,6 @@ lifetime = 5.0
 interpolate = false
 fract_delta = false
 
+[node name="Segment" type="Line2D" parent="."]
+
 [connection signal="finished" from="ParticleSpawner" to="." method="Inhume"]
