@@ -9,7 +9,9 @@ public class Dot(
 	double maxLifetime,
 	double dotSize = 1.0,
 	Color? dotColor = null,
-	double lifetimeMultiplier = 1.0)
+	double lifetimeMultiplier = 1.0,
+	Dot? previous = null,
+	Dot? next = null)
 {
 	// A simple class to hold the minimum information needed to identify
 	// a point
@@ -34,4 +36,11 @@ public class Dot(
 	public double LifetimeMultiplier = lifetimeMultiplier;
 	public Color DotColor = dotColor ?? Color.Color8(255, 255, 255, 255);
 	public double DotSize = dotSize;
+	public Dot? Previous = previous;
+	public Dot? Next = next;
+
+	public void UpdateIdentifier(ulong uid)
+	{
+		UniqueIdentifier = uid;
+	}
 }

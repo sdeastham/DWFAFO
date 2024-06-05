@@ -7,6 +7,9 @@ public partial class AirMass : Node2D
 	public bool Live;
 	private bool _dying;
 	private GpuParticles2D _particleGen;
+	private AirMass? Previous;
+	private AirMass? Next;
+	private Line2D _segment;
 	
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
@@ -15,6 +18,17 @@ public partial class AirMass : Node2D
 		_dying = false;
 		_particleGen = GetNode<GpuParticles2D>("ParticleSpawner");
 		_particleGen.Emitting = true;
+
+		// Connected segments
+		_segment = GetNode<Line2D>("Segment");
+		Previous = null;
+		Next = null;
+	}
+
+	public void SetPreviousAirMass(AirMass previous)
+	{
+		Previous = previous;
+		previous.Next = this;
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.

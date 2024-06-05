@@ -213,9 +213,8 @@ public partial class Main : Node
 		foreach (Dot point in newPoints)
 		{
 			// Is this an existing air mass?
-			if (_pointDict.TryGetValue(point.UniqueIdentifier, out AirMass? value))
+			if (_pointDict.TryGetValue(point.UniqueIdentifier, out AirMass? airMass))
 			{
-				AirMass airMass = value;
 				airMass.Live = true;
 				(float x, float y) = LonLatToXY(point.X, point.Y);
 				Vector2 transformedLocation = new Vector2(x, y);
