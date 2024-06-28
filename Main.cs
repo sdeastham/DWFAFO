@@ -55,7 +55,7 @@ public partial class Main : Node
 		}
 		// Set the camera position etc.
 		//ShowRegion(-180.0f, 0.0f, 0.0f, 90.0f);
-		ShowRegion(0.0f, 180.0f, -90.0f, 0.0f);
+		//ShowRegion(0.0f, 180.0f, -90.0f, 0.0f);
 		// Standard global view
 		ShowRegion(-180f, 180f, -90f, 90f);
 
